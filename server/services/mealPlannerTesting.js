@@ -1,130 +1,73 @@
-export const testUser = {
-    targetCalories: 2200,
-    minProtein: 100,
-    maxSugar: 50,
-    maxFat: 80,
-    vegetarian: false,
-    allowedTags: ["Main Course", "Side", "Soup", "High-Protein", "Dessert"],
-    diningHall: "De Neve",
-    mealTime: "lunch"
-  };
-
-  export const testMenu = [
-    {
-      name: "Pork Pozole",
-      calories: 350,
-      protein: 25,
-      sugar: 4,
-      fat: 15,
-      tags: ["Main Course", "Mexican", "High-Protein"],
-      location: "De Neve",
-      mealTime: "lunch"
-    },
-    {
-      name: "Vegetarian Pozole",
-      calories: 300,
-      protein: 12,
-      sugar: 3,
-      fat: 8,
-      tags: ["vegetarian", "Soup", "Mexican"],
-      location: "De Neve",
-      mealTime: "lunch"
-    },
-    {
-      name: "Baja Fried Fish Taco",
-      calories: 250,
-      protein: 18,
-      sugar: 2,
-      fat: 10,
-      tags: ["Main Course", "Seafood", "Mexican"],
-      location: "De Neve",
-      mealTime: "lunch"
-    },
-    {
-      name: "Santa Cruz Spicy Lentil & Avocado Crema Tacos",
-      calories: 280,
-      protein: 14,
-      sugar: 3,
-      fat: 9,
-      tags: ["vegetarian", "Main Course", "Mexican"],
-      location: "De Neve",
-      mealTime: "lunch"
-    },
-    {
-      name: "Chicken Ranch Pizza",
-      calories: 400,
-      protein: 20,
-      sugar: 5,
-      fat: 18,
-      tags: ["Main Course", "Pizza", "American"],
-      location: "De Neve",
-      mealTime: "lunch"
-    },
-    {
-      name: "Pepperoni Deluxe Pizza",
-      calories: 420,
-      protein: 22,
-      sugar: 4,
-      fat: 20,
-      tags: ["Main Course", "Pizza", "American"],
-      location: "De Neve",
-      mealTime: "lunch"
-    },
-    {
-      name: "Cheese Pizza",
-      calories: 380,
-      protein: 18,
-      sugar: 3,
-      fat: 16,
-      tags: ["vegetarian", "Main Course", "Pizza", "American"],
-      location: "De Neve",
-      mealTime: "lunch"
-    },
-    {
-      name: "Bruin Burger",
-      calories: 450,
-      protein: 25,
-      sugar: 6,
-      fat: 22,
-      tags: ["Main Course", "American", "High-Protein"],
-      location: "De Neve",
-      mealTime: "lunch"
-    },
-    {
-      name: "Bruin Cheeseburger",
-      calories: 480,
-      protein: 26,
-      sugar: 6,
-      fat: 24,
-      tags: ["Main Course", "American", "High-Protein"],
-      location: "De Neve",
-      mealTime: "lunch"
-    },
-    {
-      name: "LA Hot Chicken Sandwich",
-      calories: 460,
-      protein: 24,
-      sugar: 5,
-      fat: 23,
-      tags: ["Main Course", "American", "Spicy"],
-      location: "De Neve",
-      mealTime: "lunch"
-    },
-    {
-      name: "Impossible Burger",
-      calories: 420,
-      protein: 20,
-      sugar: 4,
-      fat: 20,
-      tags: ["vegetarian", "Main Course", "American", "Plant-Based"],
-      location: "De Neve",
-      mealTime: "lunch"
-    }
-  ];
-
+import fs from 'fs';
+import path from 'path';
 import { generateMealPlan } from './mealPlanner.js';
+import { fileURLToPath } from 'url';
 
-const result = generateMealPlan(testUser, testMenu);
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+const dataPath = path.join(__dirname, '../data/ucla_dining_info.json');
+
+const rawMenuData = fs.readFileSync(dataPath, 'utf-8');
+const menuData = JSON.parse(rawMenuData);
+
+function parseNutritionValue(value) {
+    if (!value) return 0;
+    return parseFloat(value.replace(/[^\d.-]/g, "")) || 0;
+}
+
+const formattedMenuData = menuData.map(item => {
+  const protein = parseNutritionValue(item.nutrition["Protein"]?.amount);
+  const carbs = parseNutritionValue(item.nutrition["Total Carbohydrate"]?.amount);
+  const fat = parseNutritionValue(item.nutrition["Total Fat"]?.amount);
+  const sugar = parseNutritionValue(item.nutrition["Sugars"]?.amount);
+
+  const tags = [];
+
+
+  if (item.name.toLowerCase().includes("vegetarian") || item.name.toLowerCase().includes("vegan")) {
+      tags.push("vegetarian");
+  }
+
+  if (item.name.toLowerCase().includes("water") || item.name.toLowerCase().includes("juice")) {
+    tags.push("Beverage");
+}
+  // Automatically tag breakfast items if they are part of a breakfast meal period
+  if (item.meal_period.toLowerCase() === "breakfast") {
+      tags.push("Breakfast");
+  }
+  if (item.meal_period.toLowerCase() === "lunch") {
+    tags.push("Lunch");
+}
+
+  if (protein / ((carbs * 4) + (protein * 4) + (fat * 9)) > 0.2) {
+      tags.push("High-Protein");
+  }
+
+  return {
+      name: item.name,
+      calories: (carbs * 4) + (protein * 4) + (fat * 9),
+      protein: protein,
+      sugar: sugar,
+      fat: fat,
+      tags: tags,
+      location: item.dining_hall.toLowerCase(),
+      mealTime: item.meal_period.toLowerCase()
+  };
+});
+
+const testUser = {
+  targetCalories: 1000,       
+  minProtein: 40,           
+  maxSugar: 30,              
+  maxFat: 50,               
+  vegetarian: false,    
+  allowedTags: ["Main Course", "Side", "Soup", "High-Protein", "Dessert", "Beverage", "Lunch"],
+  diningHall: "de neve dining", 
+  mealTime: "lunch"         
+};
+
+const result = generateMealPlan(testUser, formattedMenuData);
 
 console.log("\n✅ Selected Meal Plan:");
 console.table(result.selectedItems);
@@ -134,5 +77,8 @@ console.table(result.totals);
 
 console.log("\n🏷️ Tag Breakdown:");
 console.table(result.tagCount);
+
+console.log("\n⚠️ Warnings:");
+console.log(result.warnings || "No warnings.");
 
 console.log("\nℹ️ Status:", result.message);

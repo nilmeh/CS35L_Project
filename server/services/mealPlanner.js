@@ -6,7 +6,8 @@ export function generateMealPlan(userPreferences, menuData) {
         "Dessert": 1,
         "Main Course": 3,
         "Side": 2,
-        "Soup": 2
+        "Soup": 2,
+        "Beverage": 1
     };
 
     const filteredMenu = menuData.filter(item => {
