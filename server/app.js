@@ -1,6 +1,12 @@
 import express from "express";
 import cors from "cors";
 import mongoose from "mongoose";
+import dotenv from "dotenv";
+
+import menuRoutes from "./routes/menuRoutes.js";
+import mealPlanRoutes from "./routes/mealPlanRoutes.js";
+
+dotenv.config();
 
 const app = express();
 
@@ -14,7 +20,11 @@ mongoose
   .then(() => console.log("MongoDB connected"))
   .catch((err) => console.error("MongoDB connection error:", err));
 
-// Sample Route (temporary)
+// Routes
+app.use("/api/menu", menuRoutes);
+app.use("/api/mealplans", mealPlanRoutes);
+
+// Sample route
 app.get("/", (req, res) => {
   res.send("API is running!");
 });

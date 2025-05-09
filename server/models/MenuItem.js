@@ -2,8 +2,13 @@ import mongoose from 'mongoose';
 
 const nutritionSchema = new mongoose.Schema({
   amount: { type: Number, set: n => parseFloat(n) },
-  dv: { type: Number, set: n => parseFloat(n) },
+  dv: { 
+    type: Number, 
+    set: n => n === null ? null : parseFloat(n),
+    default: null
+  }
 });
+
 
 const menuItemSchema = new mongoose.Schema({
   dining_hall: { type: String, required: true },
