@@ -1,48 +1,99 @@
+import { useState } from 'react';
+
 function PreferencesForm() {
-    return (
-      <form>
-        <h2>User Preferences</h2>
-  
-        <label>
-          Calorie Goal:
-          <input type="number" name="calories" placeholder="e.g. 600" />
-        </label>
-        <br />
-  
-        <label>
-          Allergies (comma separated):
-          <input type="text" name="allergies" placeholder="e.g. peanuts, dairy" />
-        </label>
-        <br />
-  
-        <label>
-          Foods You Like:
-          <input type="text" name="likes" placeholder="e.g. grilled chicken" />
-        </label>
-        <br />
-  
-        <label>
-          Foods You Dislike:
-          <input type="text" name="dislikes" placeholder="e.g. mushrooms" />
-        </label>
-        <br />
-  
-        <label>
-          Preferred Dining Halls:
-          <select name="diningHall">
-            <option value="">Select one</option>
-            <option value="De Neve">De Neve</option>
-            <option value="Epicuria">Epicuria</option>
-            <option value="Bruin Plate">Bruin Plate</option>
-            <option value="FEAST">FEAST</option>
-          </select>
-        </label>
-        <br />
-  
-        <button type="submit">Generate Meal Plan</button>
-      </form>
-    );
-  }
-  
-  export default PreferencesForm;
-  
+  const [formData, setFormData] = useState({
+    calories: '',
+    allergies: '',
+    likes: '',
+    dislikes: '',
+    diningHall: ''
+  });
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData({
+      ...formData,
+      [name]: value
+    });
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    console.log('Form submitted:', formData);
+    // You can add logic here to send data to the backend later
+  };
+
+  return (
+    <form onSubmit={handleSubmit}>
+      <h2>User Preferences</h2>
+
+      <label>
+        Calorie Goal:
+        <input
+          type="number"
+          name="calories"
+          placeholder="e.g. 600"
+          value={formData.calories}
+          onChange={handleChange}
+        />
+      </label>
+      <br />
+
+      <label>
+        Allergies (comma separated):
+        <input
+          type="text"
+          name="allergies"
+          placeholder="e.g. peanuts, dairy"
+          value={formData.allergies}
+          onChange={handleChange}
+        />
+      </label>
+      <br />
+
+      <label>
+        Foods You Like:
+        <input
+          type="text"
+          name="likes"
+          placeholder="e.g. grilled chicken"
+          value={formData.likes}
+          onChange={handleChange}
+        />
+      </label>
+      <br />
+
+      <label>
+        Foods You Dislike:
+        <input
+          type="text"
+          name="dislikes"
+          placeholder="e.g. mushrooms"
+          value={formData.dislikes}
+          onChange={handleChange}
+        />
+      </label>
+      <br />
+
+      <label>
+        Preferred Dining Halls:
+        <select
+          name="diningHall"
+          value={formData.diningHall}
+          onChange={handleChange}
+        >
+          <option value="">Select one</option>
+          <option value="De Neve">De Neve</option>
+          <option value="Covel">Covel</option>
+          <option value="Bruin Plate">Bruin Plate</option>
+          <option value="FEAST">FEAST</option>
+        </select>
+      </label>
+      <br />
+
+      <button type="submit">Generate Meal Plan</button>
+    </form>
+  );
+}
+
+export default PreferencesForm;
