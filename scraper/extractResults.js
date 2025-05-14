@@ -1,5 +1,4 @@
 // Returns information from results.json into a neater format in the file organized_results.json
-const { determineCategory } = require('./helpers.js');
 
 const fs = require('fs');
 const path = require('path');
@@ -29,6 +28,8 @@ function organizeResults() {
             const ingredients = item.ingredients || [];
             const allergens = item.allergens || [];
             const nutrition = item.nutrition || {};
+            const station = item.station || 'unknown';
+            const tags = item.tags || [];
 
             if(!organizedData[timePeriod]) {
                 organizedData[timePeriod] = {};
@@ -53,23 +54,18 @@ function organizeResults() {
                 sugar = nutrition["Sugars"].amount;
             }
             
-            // Determine the category of the item
-            const category = determineCategory(name, ingredients, {
-                protein: protein,
-                fat: fat,
-                carbs: carbs,
-                sugar: sugar
-            });
             
             organizedData[timePeriod][hall].push({
                 "name": name, 
+                "station": station || 'unknown',
+                "tags": tags,
                 "ingredients": ingredients, 
                 "allergens": allergens, 
                 "protein": protein, 
                 "fat": fat, 
                 "carbs": carbs, 
                 "sugar": sugar,
-                "category": category  // Add the category to each item
+               
             });
         });
         return organizedData;
