@@ -194,50 +194,55 @@
   padding: var(--spacing-lg);
 }
 
-.chart-bar {
-  display: flex;
-  align-items: center;
-  margin-bottom: var(--spacing-md);
+/* Chart containers */
+.chart-container {
+  background-color: var(--light);
+  border-radius: var(--border-radius-md);
+  padding: var(--spacing-md);
+  margin-bottom: var(--spacing-lg);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  transition: all 0.3s ease;
 }
 
-.chart-label {
-  width: 80px;
-  font-weight: 500;
-  font-size: var(--font-size-sm);
+.chart-container:hover {
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.1);
+  transform: translateY(-2px);
 }
 
-.chart-track {
-  flex: 1;
-  height: 8px;
-  background-color: var(--border-color);
-  border-radius: 4px;
-  overflow: hidden;
-  margin: 0 var(--spacing-md);
+.macro-distribution-chart,
+.food-items-chart,
+.weekly-chart {
+  margin-top: var(--spacing-lg);
 }
 
-.chart-fill {
-  height: 100%;
-  border-radius: 4px;
-  transition: width 0.5s ease-out;
-}
-
-.chart-fill.protein {
-  background-color: var(--primary);
-}
-
-.chart-fill.fat {
-  background-color: var(--warning);
-}
-
-.chart-fill.sugar {
-  background-color: var(--danger);
-}
-
-.chart-value {
-  width: 40px;
-  text-align: right;
+.macro-distribution-chart h5,
+.food-items-chart h5,
+.weekly-chart h5,
+.nutrition-chart h5 {
+  margin: 0 0 var(--spacing-md) 0;
+  font-size: var(--font-size-md);
   font-weight: 600;
+}
+
+/* Custom tooltip styles */
+.custom-tooltip {
+  background-color: white;
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-sm);
+  padding: var(--spacing-sm);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.custom-tooltip .label {
+  font-weight: 600;
+  margin: 0 0 var(--spacing-xs) 0;
+  color: var(--text-color);
+}
+
+.custom-tooltip p {
+  margin: 0;
   font-size: var(--font-size-sm);
+  color: var(--text-secondary);
 }
 
 /* Loading state */
