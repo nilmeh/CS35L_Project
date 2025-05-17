@@ -3,7 +3,7 @@ import MenuItem from './MenuItem.js';
 const { Schema } = mongoose;
 
 const mealPlanSchema = new Schema({
-  userId: { type: String, required: false }, // for Firebase auth later
+  userId: { type: String, required: true },
   date: { type: Date, required: true },
   plan: {
     breakfast: [{ type: mongoose.Schema.Types.ObjectId, ref: 'MenuItem' }],
