@@ -1,5 +1,6 @@
 import { useState } from 'react';
-
+import axios from 'axios';
+ 
 function PreferencesForm() {
   const [formData, setFormData] = useState({
     calories: '',
@@ -17,10 +18,14 @@ function PreferencesForm() {
     });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log('Form submitted:', formData);
-    // You can add logic here to send data to the backend later
+    try {
+      const response = await axios.post('http://localhost:3000/api/mealplans', formData);
+      console.log('Meal plan response:', response.data);
+    } catch (error) {
+      console.error('Error generating meal plan:', error);
+    }
   };
 
   return (
