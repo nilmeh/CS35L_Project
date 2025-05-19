@@ -108,27 +108,27 @@ function Dashboard() {
     return [
       {
         subject: 'Protein',
-        A: Math.min(100, (currentPlan.totalProtein / idealDailyValues.protein) * 100),
+        A: Math.min(100, Math.round((currentPlan.totalProtein / idealDailyValues.protein) * 100)),
         fullMark: 100
       },
       {
         subject: 'Fat',
-        A: Math.min(100, (currentPlan.totalFat / idealDailyValues.fat) * 100),
+        A: Math.min(100, Math.round((currentPlan.totalFat / idealDailyValues.fat) * 100)),
         fullMark: 100
       },
       {
         subject: 'Sugar',
-        A: Math.min(100, (currentPlan.totalSugar / idealDailyValues.sugar) * 100),
+        A: Math.min(100, Math.round((currentPlan.totalSugar / idealDailyValues.sugar) * 100)),
         fullMark: 100
       },
       {
         subject: 'Carbs',
-        A: Math.min(100, (currentPlan.totalCarbs / idealDailyValues.carbs) * 100),
+        A: Math.min(100, Math.round((currentPlan.totalCarbs / idealDailyValues.carbs) * 100)),
         fullMark: 100
       },
       {
         subject: 'Calories',
-        A: Math.min(100, (currentPlan.totalCalories / idealDailyValues.calories) * 100),
+        A: Math.min(100, Math.round((currentPlan.totalCalories / idealDailyValues.calories) * 100)),
         fullMark: 100
       }
     ];
