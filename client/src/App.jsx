@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import Dashboard from './pages/Dashboard';
 import PreferencesPage from './pages/PreferencesPage';
 import EditPlanPage from './pages/EditPlanPage';
+import MenuPage from './pages/MenuPage';
 import './App.css';
 
 function App() {
@@ -45,6 +46,9 @@ function App() {
                   <Link to="/" className="nav-link">Dashboard</Link>
                 </li>
                 <li className="nav-item">
+                  <Link to="/menu" className="nav-link">Menu</Link>
+                </li>
+                <li className="nav-item">
                   <Link to="/preferences" className="nav-link">Preferences</Link>
                 </li>
                 <li className="nav-item">
@@ -60,6 +64,7 @@ function App() {
         <div className="container">
           <Routes>
             <Route path="/" element={<Dashboard />} />
+            <Route path="/menu" element={<MenuPage />} />
             <Route path="/preferences" element={<PreferencesPage />} />
             <Route path="/edit-plan" element={<EditPlanPage />} />
           </Routes>
