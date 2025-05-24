@@ -4,6 +4,8 @@ import Dashboard from './pages/Dashboard';
 import PreferencesPage from './pages/PreferencesPage';
 import EditPlanPage from './pages/EditPlanPage';
 import MenuPage from './pages/MenuPage';
+import LoginPage from './pages/LoginPage';
+import SignupPage from './pages/SignupPage';
 import './App.css';
 
 function App() {
@@ -67,6 +69,8 @@ function App() {
             <Route path="/menu" element={<MenuPage />} />
             <Route path="/preferences" element={<PreferencesPage />} />
             <Route path="/edit-plan" element={<EditPlanPage />} />
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/signup" element={<SignupPage />} />
           </Routes>
         </div>
       </main>
