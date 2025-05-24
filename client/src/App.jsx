@@ -6,6 +6,7 @@ import EditPlanPage from './pages/EditPlanPage';
 import MenuPage from './pages/MenuPage';
 import LoginPage from './pages/LoginPage';
 import SignupPage from './pages/SignupPage';
+import MealPlannerPage from "./pages/MealPlannerPage";
 import './App.css';
 
 function App() {
@@ -68,6 +69,7 @@ function App() {
             <Route path="/" element={<Dashboard />} />
             <Route path="/menu" element={<MenuPage />} />
             <Route path="/preferences" element={<PreferencesPage />} />
+            <Route path="/meal-planner" element={<MealPlannerPage />} />
             <Route path="/edit-plan" element={<EditPlanPage />} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/signup" element={<SignupPage />} />
