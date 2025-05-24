@@ -1,74 +1,57 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import PreferencesForm from '../components/PreferencesForm';
-import './PreferencesPage.css';
+import axios from 'axios';
+import PreferencesForm from '../components/PreferencesForm'; // Make sure this path is correct
+
 
 function PreferencesPage() {
+  const [mealPlan, setMealPlan] = useState(null);
+  const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const navigate = useNavigate();
-  
-  const handleSubmitPreferences = async (preferences) => {
-    setLoading(true);
-    
+
+  const handleGeneratePlan = async (preferences) => {
+    setLoading(true); 
+    setError('');
+    setMealPlan(null);
+
     try {
-      // Replace later
-      console.log('Submitted preferences:', preferences);
+      console.log('Sending preferences to backend:', preferences);
       
-      setTimeout(() => {
-        setLoading(false);
-        
-        navigate('/');
-      }, 1500);
-    } catch (error) {
-      console.error('Error generating meal plan:', error);
-      setLoading(false);
+      
+      const response = await axios.post('http://localhost:3000/api/mealplans', preferences);
+      
+      console.log('Meal plan response:', response.data);
+      setMealPlan(response.data);
+      
+    } catch (err) {
+      console.error('Error generating meal plan:', err);
+      setError('Could not generate a meal plan. Please try again.');
+      setMealPlan(null);
+    } finally {
+      setLoading(false); 
     }
   };
-  
+
   return (
-    <div className="preferences-page">
-      <div className="preferences-header">
-        <h2>Set Your Meal Preferences</h2>
-        <p>Customize your nutritional goals and dietary preferences</p>
-      </div>
+    <div className="preferences-page" style={{ padding: '2rem' }}>
       
-      <div className="preferences-container">
-        {loading ? (
-          <div className="preferences-loading">
-            <p>Generating your meal plan...</p>
-          </div>
-        ) : (
-          <>
-            <div className="preferences-info">
-              <h3>How It Works</h3>
-              <ol>
-                <li>
-                  <strong>Set your nutritional goals</strong>
-                  <p>Tell us how many calories you want and set limits for protein, sugar, and fat.</p>
-                </li>
-                <li>
-                  <strong>Choose your dietary preferences</strong>
-                  <p>Select your dietary restrictions and foods you like or dislike.</p>
-                </li>
-                <li>
-                  <strong>Select dining options</strong>
-                  <p>Choose your preferred dining hall and meal time.</p>
-                </li>
-                <li>
-                  <strong>Get personalized results</strong>
-                  <p>Our algorithm will create an optimal meal plan based on available options.</p>
-                </li>
-              </ol>
-            </div>
+      
+      <PreferencesForm onSubmit={handleGeneratePlan} />
+
+      {loading && <p>Generating your meal plan, please wait...</p>}
+
+      {error && <p style={{ color: 'red' }}>{error}</p>}
+      
+      {mealPlan && (
+        <div className="results-display" style={{ marginTop: '2rem' }}>
+          <h2>Your Generated Meal Plan!</h2>
+          {
             
-            <div className="preferences-form-container">
-              <PreferencesForm onSubmit={handleSubmitPreferences} />
-            </div>
-          </>
-        )}
-      </div>
+          }
+          <pre>{JSON.stringify(mealPlan, null, 2)}</pre>
+        </div>
+      )}
     </div>
   );
 }
 
-export default PreferencesPage; 
+export default PreferencesPage;

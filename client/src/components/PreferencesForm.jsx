@@ -10,6 +10,7 @@ function PreferencesForm({ onSubmit }) {
     vegetarian: false,
     allowedTags: [],
     disallowedTags: [],
+    allergies: [], 
     diningHall: "",
     mealTime: "lunch"
   });
@@ -140,6 +141,18 @@ function PreferencesForm({ onSubmit }) {
             onChange={(e) => handleTagChange(e, 'disallowedTags')} 
           />
         </div>
+
+        <div className="form-group">
+          <label htmlFor="allergies">Allergies (comma separated):</label>
+          <input 
+            type="text" 
+            id="allergies" 
+            name="allergies" 
+            placeholder="e.g. peanuts, dairy, shellfish" 
+            value={preferences.allergies.join(', ')} 
+            onChange={(e) => handleTagChange(e, 'allergies')} 
+          />
+        </div>
       </div>
       
       <div className="form-section">
@@ -182,7 +195,3 @@ function PreferencesForm({ onSubmit }) {
 }
 
 export default PreferencesForm;
-<<<<<<< HEAD
-=======
-  
->>>>>>> feature/frontend-components
