@@ -1,0 +1,35 @@
+name: Weekly Scraper
+
+on:
+  schedule:
+    - cron: '0 7 * * 0'  # Every Sunday at 12 AM PT (7 AM UTC)
+  workflow_dispatch:     # Manual trigger
+
+jobs:
+  run-scraper-upload:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '22'
+
+      - name: Install server dependencies
+        working-directory: ./server
+        run: npm install
+
+      - name: Run uclaScraper script
+        run: node scraper/uclaScraper.js
+
+      - name: Run extractResults script
+        run: node scraper/extractResults.js
+
+      - name: Upload JSON to DB
+        working-directory: ./server
+        env:
+          MONGO_URI: ${{ secrets.MONGO_URI }}
+        run: node uploadToDb.js

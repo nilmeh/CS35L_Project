@@ -13,7 +13,6 @@ const nutritionSchema = new mongoose.Schema({
 const menuItemSchema = new mongoose.Schema({
   dining_hall: { type: String, required: true },
   meal_period: { type: String, enum: ['breakfast', 'lunch', 'dinner'], required: true },
-  url: { type: String, required: true },
   name: { type: String, required: true },
   allergens: { type: [String], default: [], required: true },
   nutrition: {
