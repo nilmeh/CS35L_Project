@@ -1,4 +1,6 @@
 import MealPlan from '../models/MealPlan.js';
+import MenuItem from '../models/MenuItem.js';
+import { generateMealPlan } from '../services/mealPlanner.js';
 
 export const getMealPlanByUser = async (req, res) => {
   try {
@@ -33,6 +35,87 @@ export const createMealPlan = async (req, res) => {
     res.status(201).json(populated);
   } catch (error) {
     res.status(400).json({ message: 'Error creating meal plan', error });
+  }
+};
+
+export const generateMealPlanForUser = async (req, res) => {
+  try {
+    const {
+      targetCalories = 2000,
+      minProtein = 50,
+      maxSugar,
+      maxFat,
+      vegetarian = false,
+      vegan = false,
+      allowedTags = [],
+      disallowedTags = [],
+      allergens = [],
+      diningHall,
+      mealTime
+    } = req.body;
+
+    // Validate input
+    if (targetCalories <= 0) {
+      return res.status(400).json({ message: 'Target calories must be positive' });
+    }
+    if (minProtein < 0) {
+      return res.status(400).json({ message: 'Minimum protein must be non-negative' });
+    }
+
+    // Fetch menu items based on preferences
+    const filter = {};
+    if (diningHall) filter.dining_hall = diningHall;
+    if (mealTime) filter.meal_period = mealTime;
+
+    const menuItems = await MenuItem.find(filter);
+
+    if (menuItems.length === 0) {
+      return res.status(404).json({ 
+        message: 'No menu items found for the specified preferences',
+        filter 
+      });
+    }
+
+    // Generate meal plan using the algorithm
+    const userPreferences = {
+      targetCalories,
+      minProtein,
+      maxSugar,
+      maxFat,
+      vegetarian,
+      vegan,
+      allowedTags,
+      disallowedTags,
+      allergens,
+      diningHall,
+      mealTime
+    };
+
+    const result = await generateMealPlan(userPreferences, menuItems);
+
+    if (!result.success) {
+      return res.status(400).json({
+        message: result.message,
+        selectedItems: result.selectedItems,
+        totals: result.totals
+      });
+    }
+
+    res.status(200).json({
+      message: result.message,
+      mealPlan: {
+        selectedItems: result.selectedItems,
+        itemsByCategory: result.itemsByCategory,
+        totals: result.totals,
+        warnings: result.warnings
+      },
+      preferences: userPreferences,
+      availableItems: menuItems.length
+    });
+
+  } catch (error) {
+    console.error('Error generating meal plan:', error);
+    res.status(500).json({ message: 'Error generating meal plan', error: error.message });
   }
 };
 

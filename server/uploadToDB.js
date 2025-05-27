@@ -6,62 +6,44 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
-const MONGO_URI = process.env.MONGO_URI;
+// Use a default URI for testing if environment variable is not set
+const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/ucla-meal-planner';
 
 function transformRawData(raw) {
   const items = [];
 
-  // Nutrient keys required by schema
-  const nutrientKeys = [
-    "Total Fat",
-    "Saturated Fat",
-    "Trans Fat",
-    "Cholesterol",
-    "Sodium",
-    "Total Carbohydrate",
-    "Dietary Fiber",
-    "Sugars",
-    "Includes Added Sugars",
-    "Protein",
-    "Calcium",
-    "Iron",
-    "Potassium",
-    "Vitamin D"
-  ];
+  // Parse nutrition values from strings like "6.5g" to numbers
+  const parseNutrition = (value) => {
+    if (!value) return 0;
+    if (typeof value === 'number') return value;
+    if (typeof value === 'string') {
+      // Remove 'g' and any other non-numeric characters, then parse
+      const cleaned = value.replace(/[^0-9.\-]/g, '');
+      return parseFloat(cleaned) || 0;
+    }
+    return 0;
+  };
 
   for (const [meal_period, halls] of Object.entries(raw)) {
     for (const [dining_hall, entries] of Object.entries(halls)) {
       for (const entry of entries) {
-        // Parse numeric macro fields
-        const parseNumeric = val => {
-          if (val == null) return null;
-          if (typeof val === 'number') return val;
-          if (typeof val === 'string') {
-            const cleaned = val.replace(/[^0-9.\-]/g, '');
-            return parseFloat(cleaned) || 0;
-          }
-          return 0;
-        };
-
-        // Build full nutrition object matching schema
-        const nutrition = {};
-        nutrientKeys.forEach(key => {
-          let amount = 0;
-          if (key === 'Total Fat') amount = parseNumeric(entry.fat);
-          else if (key === 'Protein') amount = parseNumeric(entry.protein);
-          else if (key === 'Total Carbohydrate') amount = parseNumeric(entry.carbs);
-          else if (key === 'Sugars') amount = parseNumeric(entry.sugar);
-          // Other keys default to 0
-          nutrition[key] = { amount, dv: null };
-        });
-
-        items.push({
+        const item = {
           dining_hall,
           meal_period,
-          name: entry.name,
+          name: entry.name || '',
+          station: entry.station || '',
+          tags: entry.tags || [],
+          ingredients: entry.ingredients || [],
           allergens: entry.allergens || [],
-          nutrition,
-        });
+          nutrition: {
+            protein: parseNutrition(entry.protein),
+            fat: parseNutrition(entry.fat),
+            carbs: parseNutrition(entry.carbs),
+            sugar: parseNutrition(entry.sugar)
+          }
+        };
+
+        items.push(item);
       }
     }
   }
@@ -71,17 +53,24 @@ function transformRawData(raw) {
 
 async function upload() {
   try {
-    await mongoose.connect(process.env.MONGO_URI);
+    console.log('Attempting to connect to MongoDB with URI:', MONGO_URI ? 'URI provided' : 'No URI provided');
+    await mongoose.connect(MONGO_URI);
     console.log('Connected to MongoDB');
 
     // Read organised JSON
-    const filePath = path.resolve('../scraper', 'organized_results.json');
+    const filePath = path.resolve('./data', 'organized_results.json');
     const rawJson = await fs.readFile(filePath, 'utf-8');
     const rawData = JSON.parse(rawJson);
 
     // Transform data
     const docs = transformRawData(rawData);
     console.log(`Transformed ${docs.length} items for upload.`);
+
+    // Show sample of first transformed item
+    if (docs.length > 0) {
+      console.log('Sample transformed item:');
+      console.log(JSON.stringify(docs[0], null, 2));
+    }
 
     // Clear and insert
     await MenuItem.deleteMany({});

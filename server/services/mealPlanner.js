@@ -306,9 +306,9 @@ export function generateMealPlan(userPreferences, menuData) {
         const isVegan = !vegan || item.tags.some(tag => 
             tag.toLowerCase() === 'vegan' || tag.toLowerCase() === 'plant-based');
         
-        // Check location and meal time
-        const matchesLocation = !diningHall || item.location === diningHall;
-        const matchesTime = !mealTime || item.mealTime === mealTime;
+        // Check location and meal time - updated for new model structure
+        const matchesLocation = !diningHall || item.dining_hall === diningHall;
+        const matchesTime = !mealTime || item.meal_period === mealTime;
         
         // Check allowed and disallowed tags
         const hasAllowedTags = allowedTags.length === 0 || 
@@ -337,16 +337,21 @@ export function generateMealPlan(userPreferences, menuData) {
         };
     }
 
-    // Score menu items based on nutritional value
+    // Score menu items based on nutritional value - updated to use nutrition object
     const scored = filteredMenu.map(item => {
+        const calories = item.nutrition?.fat * 9 + item.nutrition?.protein * 4 + item.nutrition?.carbs * 4 || 1;
+        const protein = item.nutrition?.protein || 0;
+        const sugar = item.nutrition?.sugar || 0;
+        const fat = item.nutrition?.fat || 0;
+        
         // Calculate nutrition score - higher protein is good, lower sugar and fat is good
-        const proteinScore = (item.protein / item.calories) * 0.6;
-        const sugarPenalty = (item.sugar / item.calories) * 0.25;
-        const fatPenalty = (item.fat / item.calories) * 0.15;
+        const proteinScore = (protein / calories) * 0.6;
+        const sugarPenalty = (sugar / calories) * 0.25;
+        const fatPenalty = (fat / calories) * 0.15;
         
         const score = proteinScore - sugarPenalty - fatPenalty;
         
-        return { ...item, score };
+        return { ...item, score, calculatedCalories: calories };
     }).sort((a, b) => b.score - a.score);
 
     const selectedItems = [];
@@ -367,6 +372,11 @@ export function generateMealPlan(userPreferences, menuData) {
         let servings = 0;
         const category = item.category || detectFoodCategory(item.name, item.station);
         
+        const calories = item.calculatedCalories;
+        const protein = item.nutrition?.protein || 0;
+        const sugar = item.nutrition?.sugar || 0;
+        const fat = item.nutrition?.fat || 0;
+        
         // Skip if we've reached the category limit
         if (CATEGORY_LIMIT[category] && (categoryCount[category] || 0) >= CATEGORY_LIMIT[category]) {
             continue;
@@ -375,20 +385,20 @@ export function generateMealPlan(userPreferences, menuData) {
         // Add servings until we reach limits
         while (
             servings < MAX_SERVINGS &&
-            totals.calories + item.calories <= targetCalories * 1.05 &&
-            totals.protein + item.protein <= minProtein * 2
+            totals.calories + calories <= targetCalories * 1.05 &&
+            totals.protein + protein <= minProtein * 2
         ) {
             // Stop if adding this would exceed sugar or fat limits
             if (
-                (maxSugar && totals.sugar + item.sugar > maxSugar) ||
-                (maxFat && totals.fat + item.fat > maxFat)
+                (maxSugar && totals.sugar + sugar > maxSugar) ||
+                (maxFat && totals.fat + fat > maxFat)
             ) break;
 
             servings++;
-            totals.calories += item.calories;
-            totals.protein += item.protein;
-            totals.sugar += item.sugar;
-            totals.fat += item.fat;
+            totals.calories += calories;
+            totals.protein += protein;
+            totals.sugar += sugar;
+            totals.fat += fat;
         }
 
         if (servings > 0) {
@@ -401,12 +411,12 @@ export function generateMealPlan(userPreferences, menuData) {
             selectedItems.push({
                 name: item.name,
                 servings: servings,
-                calories: item.calories * servings,
-                protein: item.protein * servings,
-                sugar: item.sugar * servings,
-                fat: item.fat * servings,
+                calories: calories * servings,
+                protein: protein * servings,
+                sugar: sugar * servings,
+                fat: fat * servings,
                 category: category,
-                location: item.location,
+                dining_hall: item.dining_hall,
                 station: item.station
             });
         }
@@ -425,6 +435,11 @@ export function generateMealPlan(userPreferences, menuData) {
         for (const item of remainingItems) {
             const category = item.category || detectFoodCategory(item.name, item.station);
             
+            const calories = item.calculatedCalories;
+            const protein = item.nutrition?.protein || 0;
+            const sugar = item.nutrition?.sugar || 0;
+            const fat = item.nutrition?.fat || 0;
+            
             // Skip if we've reached the category limit
             if (CATEGORY_LIMIT[category] && (categoryCount[category] || 0) >= CATEGORY_LIMIT[category]) {
                 continue;
@@ -436,19 +451,19 @@ export function generateMealPlan(userPreferences, menuData) {
             // Add servings until we reach limits
             while (
                 servings < maxAdditionalServings &&
-                totals.calories + item.calories <= targetCalories * 1.05
+                totals.calories + calories <= targetCalories * 1.05
             ) {
                 // Allow slight exceeding of sugar/fat if needed to reach calorie goal
                 if (
-                    (maxSugar && totals.sugar + item.sugar > maxSugar * 1.1) ||
-                    (maxFat && totals.fat + item.fat > maxFat * 1.1)
+                    (maxSugar && totals.sugar + sugar > maxSugar * 1.1) ||
+                    (maxFat && totals.fat + fat > maxFat * 1.1)
                 ) break;
 
                 servings++;
-                totals.calories += item.calories;
-                totals.protein += item.protein;
-                totals.sugar += item.sugar;
-                totals.fat += item.fat;
+                totals.calories += calories;
+                totals.protein += protein;
+                totals.sugar += sugar;
+                totals.fat += fat;
             }
 
             if (servings > 0) {
@@ -463,12 +478,12 @@ export function generateMealPlan(userPreferences, menuData) {
                     selectedItems.push({
                         name: item.name,
                         servings: servings,
-                        calories: item.calories * servings,
-                        protein: item.protein * servings,
-                        sugar: item.sugar * servings,
-                        fat: item.fat * servings,
+                        calories: calories * servings,
+                        protein: protein * servings,
+                        sugar: sugar * servings,
+                        fat: fat * servings,
                         category: category,
-                        location: item.location,
+                        dining_hall: item.dining_hall,
                         station: item.station
                     });
                 } else {
@@ -476,10 +491,10 @@ export function generateMealPlan(userPreferences, menuData) {
                     const existingItem = selectedItems.find(i => i.name === item.name);
                     if (existingItem) {
                         existingItem.servings += servings;
-                        existingItem.calories += item.calories * servings;
-                        existingItem.protein += item.protein * servings;
-                        existingItem.sugar += item.sugar * servings;
-                        existingItem.fat += item.fat * servings;
+                        existingItem.calories += calories * servings;
+                        existingItem.protein += protein * servings;
+                        existingItem.sugar += sugar * servings;
+                        existingItem.fat += fat * servings;
                     }
                 }
             }
