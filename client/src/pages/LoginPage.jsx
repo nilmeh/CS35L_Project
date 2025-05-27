@@ -19,7 +19,6 @@ function LoginPage() {
       [name]: value
     }));
     
-    // Clear error when user starts typing
     if (errors[name]) {
       setErrors(prev => ({
         ...prev,
@@ -31,14 +30,12 @@ function LoginPage() {
   const validateForm = () => {
     const newErrors = {};
 
-    // Email validation
     if (!formData.email) {
       newErrors.email = 'Email is required';
     } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
       newErrors.email = 'Please enter a valid email address';
     }
 
-    // Password validation
     if (!formData.password) {
       newErrors.password = 'Password is required';
     } else if (formData.password.length < 6) {
@@ -57,13 +54,12 @@ function LoginPage() {
     setLoading(true);
     
     try {
-      // Replace with actual API call
+      // Replace with actual API call/Firebase
       console.log('Login attempt:', formData);
       
       // Simulate API call
       await new Promise(resolve => setTimeout(resolve, 1500));
       
-      // On successful login, redirect to dashboard
       navigate('/');
     } catch (error) {
       console.error('Login error:', error);
