@@ -123,6 +123,44 @@ const FOOD_TYPE_KEYWORDS = {
 };
 
 /**
+ * Calculates preference score for an item based on liked and disliked foods
+ * @param {Object} item - Menu item with name, ingredients, and tags
+ * @param {Array} likedFoods - Array of food preferences user likes
+ * @param {Array} dislikedFoods - Array of food preferences user dislikes
+ * @returns {number} Preference score (positive for liked, negative for disliked, 0 for neutral)
+ */
+function calculatePreferenceScore(item, likedFoods = [], dislikedFoods = []) {
+    if (likedFoods.length === 0 && dislikedFoods.length === 0) {
+        return 0; // No preferences specified
+    }
+
+    let preferenceScore = 0;
+    const itemText = [
+        item.name || '',
+        ...(item.ingredients || []),
+        ...(item.tags || [])
+    ].join(' ').toLowerCase();
+
+    // Calculate liked food matches (positive score)
+    for (const likedFood of likedFoods) {
+        const likedFoodLower = likedFood.toLowerCase().trim();
+        if (likedFoodLower && itemText.includes(likedFoodLower)) {
+            preferenceScore += 0.5; // Boost score for liked foods
+        }
+    }
+
+    // Calculate disliked food matches (negative score)
+    for (const dislikedFood of dislikedFoods) {
+        const dislikedFoodLower = dislikedFood.toLowerCase().trim();
+        if (dislikedFoodLower && itemText.includes(dislikedFoodLower)) {
+            preferenceScore -= 0.3; // Reduce score for disliked foods
+        }
+    }
+
+    return preferenceScore;
+}
+
+/**
  * Detects food category based on item name and station
  * @param {string} itemName - The name of the food item
  * @param {string} station - The station where the food is served
@@ -305,6 +343,174 @@ function enhanceMenuData(menuData) {
 }
 
 /**
+ * Determines the variation strategy based on regeneration type and seed
+ * @param {string} regenerationType - The type of regeneration ('default', 'regenerate')
+ * @param {number|null} variationSeed - Optional seed for variation
+ * @returns {object} Variation strategy configuration
+ */
+function getVariationStrategy(regenerationType, variationSeed) {
+    if (regenerationType === 'default' || !variationSeed) {
+        return {
+            name: 'balanced',
+            proteinWeight: 0.6,
+            sugarPenalty: 0.25,
+            fatPenalty: 0.15,
+            sortingMethod: 'score'
+        };
+    }
+
+    // Use seed to determine variation strategy
+    const strategies = [
+        {
+            name: 'protein-focused',
+            proteinWeight: 0.8,
+            sugarPenalty: 0.15,
+            fatPenalty: 0.05,
+            sortingMethod: 'protein'
+        },
+        {
+            name: 'low-sugar',
+            proteinWeight: 0.4,
+            sugarPenalty: 0.45,
+            fatPenalty: 0.15,
+            sortingMethod: 'sugar'
+        },
+        {
+            name: 'low-fat',
+            proteinWeight: 0.5,
+            sugarPenalty: 0.2,
+            fatPenalty: 0.3,
+            sortingMethod: 'fat'
+        },
+        {
+            name: 'calorie-efficient',
+            proteinWeight: 0.3,
+            sugarPenalty: 0.2,
+            fatPenalty: 0.1,
+            sortingMethod: 'calories'
+        },
+        {
+            name: 'variety-focused',
+            proteinWeight: 0.5,
+            sugarPenalty: 0.2,
+            fatPenalty: 0.15,
+            sortingMethod: 'category'
+        }
+    ];
+
+    const strategyIndex = variationSeed % strategies.length;
+    return strategies[strategyIndex];
+}
+
+/**
+ * Calculates nutrition score based on variation strategy
+ * @param {number} calories - Item calories
+ * @param {number} protein - Item protein
+ * @param {number} sugar - Item sugar
+ * @param {number} fat - Item fat
+ * @param {object} strategy - Variation strategy
+ * @returns {number} Calculated score
+ */
+function calculateVariationScore(calories, protein, sugar, fat, strategy) {
+    if (calories <= 0) return 0;
+    
+    const proteinScore = (protein / calories) * strategy.proteinWeight;
+    const sugarPenalty = (sugar / calories) * strategy.sugarPenalty;
+    const fatPenalty = (fat / calories) * strategy.fatPenalty;
+    
+    return proteinScore - sugarPenalty - fatPenalty;
+}
+
+/**
+ * Applies different sorting strategies based on variation
+ * @param {Array} items - Scored menu items
+ * @param {object} strategy - Variation strategy
+ * @returns {Array} Sorted items
+ */
+function applySortingVariation(items, strategy) {
+    let sortedItems = [...items];
+
+    switch (strategy.sortingMethod) {
+        case 'protein':
+            sortedItems.sort((a, b) => {
+                const proteinA = a.nutrition?.protein || 0;
+                const proteinB = b.nutrition?.protein || 0;
+                // First sort by preference, then by protein
+                if (a.preferenceScore !== b.preferenceScore) {
+                    return b.preferenceScore - a.preferenceScore;
+                }
+                return proteinB - proteinA;
+            });
+            break;
+        
+        case 'sugar':
+            sortedItems.sort((a, b) => {
+                const sugarA = a.nutrition?.sugar || 0;
+                const sugarB = b.nutrition?.sugar || 0;
+                // First sort by preference, then by sugar (lower first)
+                if (a.preferenceScore !== b.preferenceScore) {
+                    return b.preferenceScore - a.preferenceScore;
+                }
+                return sugarA - sugarB; // Lower sugar first
+            });
+            break;
+        
+        case 'fat':
+            sortedItems.sort((a, b) => {
+                const fatA = a.nutrition?.fat || 0;
+                const fatB = b.nutrition?.fat || 0;
+                // First sort by preference, then by fat (lower first)
+                if (a.preferenceScore !== b.preferenceScore) {
+                    return b.preferenceScore - a.preferenceScore;
+                }
+                return fatA - fatB; // Lower fat first
+            });
+            break;
+        
+        case 'calories':
+            sortedItems.sort((a, b) => {
+                // First sort by preference, then by calories (lower first)
+                if (a.preferenceScore !== b.preferenceScore) {
+                    return b.preferenceScore - a.preferenceScore;
+                }
+                return a.calculatedCalories - b.calculatedCalories; // Lower calories first
+            });
+            break;
+        
+        case 'category':
+            // Sort by category diversity, then by preference, then by score
+            const categoryPriority = { 'Main Course': 1, 'Side': 2, 'Soup': 3, 'Dessert': 4, 'Beverage': 5 };
+            sortedItems.sort((a, b) => {
+                const categoryA = a.category || detectFoodCategory(a.name, a.station);
+                const categoryB = b.category || detectFoodCategory(b.name, b.station);
+                const priorityA = categoryPriority[categoryA] || 6;
+                const priorityB = categoryPriority[categoryB] || 6;
+                
+                if (priorityA !== priorityB) {
+                    return priorityA - priorityB;
+                }
+                // Then by preference score
+                if (a.preferenceScore !== b.preferenceScore) {
+                    return b.preferenceScore - a.preferenceScore;
+                }
+                return b.score - a.score; // Then by nutritional score
+            });
+            break;
+        
+        default: // 'score'
+            sortedItems.sort((a, b) => {
+                // Combine nutritional score with preference score
+                const totalScoreA = a.score + a.preferenceScore;
+                const totalScoreB = b.score + b.preferenceScore;
+                return totalScoreB - totalScoreA;
+            });
+            break;
+    }
+
+    return sortedItems;
+}
+
+/**
  * Generates a meal plan based on user preferences and available menu data
  * @param {Object} userPreferences - User's dietary preferences and restrictions
  * @param {Array} menuData - Available menu items
@@ -321,8 +527,13 @@ export function generateMealPlan(userPreferences, menuData) {
         allowedTags = [],
         disallowedTags = [],
         allergens = [],
+        excludedCategories = [],
         diningHall,
-        mealTime
+        mealTime,
+        variationSeed = null,
+        regenerationType = 'default',
+        likedFoods = [],
+        dislikedFoods = []
     } = userPreferences;
 
     // Enhance the menu data with additional tags and categories
@@ -370,8 +581,13 @@ export function generateMealPlan(userPreferences, menuData) {
                                   return inAllergensList || inTags;
                               });
         
+        // Check category exclusions - if user wants to exclude certain categories
+        const itemCategory = item.category || detectFoodCategory(item.name, item.station);
+        const notExcludedCategory = excludedCategories.length === 0 || 
+                                  !excludedCategories.includes(itemCategory);
+        
         const passes = passesVegetarianCheck && passesVeganCheck && matchesLocation && matchesTime && 
-               hasAllowedTags && hasNoDisallowedTags && hasNoAllergens;
+               hasAllowedTags && hasNoDisallowedTags && hasNoAllergens && notExcludedCategory;
         
         return passes;
     });
@@ -397,7 +613,10 @@ export function generateMealPlan(userPreferences, menuData) {
         };
     }
 
-    // Score menu items based on nutritional value and estimated calories
+    // Apply variation strategy based on regenerationType and variationSeed
+    const variationStrategy = getVariationStrategy(regenerationType, variationSeed);
+
+    // Score menu items based on nutritional value and estimated calories with variation
     const scored = filteredMenu.map(item => {
         // Use existing calories if available, otherwise estimate from macros
         let calories = item.calories || item.calculatedCalories;
@@ -425,15 +644,19 @@ export function generateMealPlan(userPreferences, menuData) {
         const sugar = item.nutrition?.sugar || 0;
         const fat = item.nutrition?.fat || 0;
         
-        // Calculate nutrition score - higher protein is good, lower sugar and fat is good
-        const proteinScore = calories > 0 ? (protein / calories) * 0.6 : 0;
-        const sugarPenalty = calories > 0 ? (sugar / calories) * 0.25 : 0;
-        const fatPenalty = calories > 0 ? (fat / calories) * 0.15 : 0;
+        // Calculate nutrition score with variation strategy
+        const score = calculateVariationScore(
+            calories, protein, sugar, fat, variationStrategy
+        );
         
-        const score = proteinScore - sugarPenalty - fatPenalty;
+        // Calculate preference score for the item
+        const preferenceScore = calculatePreferenceScore(item, likedFoods, dislikedFoods);
         
-        return { ...item, score, calculatedCalories: calories };
-    }).sort((a, b) => b.score - a.score);
+        return { ...item, score, calculatedCalories: calories, preferenceScore };
+    });
+
+    // Apply different sorting strategies based on variation
+    const sortedItems = applySortingVariation(scored, variationStrategy);
 
     const selectedItems = [];
     const totals = {
@@ -449,7 +672,7 @@ export function generateMealPlan(userPreferences, menuData) {
     const warnings = [];
 
     // First pass: Select highest scoring items until we reach nutritional targets
-    for (const item of scored) {
+    for (const item of sortedItems) {
         let servings = 0;
         const category = item.category || detectFoodCategory(item.name, item.station);
         
@@ -498,7 +721,8 @@ export function generateMealPlan(userPreferences, menuData) {
                 fat: fat * servings,
                 category: category,
                 dining_hall: item.dining_hall,
-                station: item.station
+                station: item.station,
+                preferenceScore: item.preferenceScore
             });
         }
 
@@ -509,7 +733,7 @@ export function generateMealPlan(userPreferences, menuData) {
     // Second pass: If we haven't reached calorie goal, add more items
     if (totals.calories < targetCalories * 0.95) {
         // Filter items we haven't fully used yet
-        const remainingItems = scored.filter(item => 
+        const remainingItems = sortedItems.filter(item => 
             (!usedItems.has(item.name) || (itemCount[item.name] || 0) < MAX_SERVINGS)
         );
 
@@ -571,7 +795,8 @@ export function generateMealPlan(userPreferences, menuData) {
                         fat: fat * servings,
                         category: category,
                         dining_hall: item.dining_hall,
-                        station: item.station
+                        station: item.station,
+                        preferenceScore: item.preferenceScore
                     });
                 }
             }
@@ -614,12 +839,20 @@ export function generateMealPlan(userPreferences, menuData) {
         message = "Meal plan generated with some limitations. See warnings below.";
     }
 
-    return {
+    // Add variation info to response
+    const result = {
         success: true,
         message,
         selectedItems,
         itemsByCategory,
         totals,
-        warnings
+        warnings,
+        variationInfo: {
+            strategy: variationStrategy.name,
+            seed: variationSeed,
+            regenerationType
+        }
     };
+
+    return result;
 }

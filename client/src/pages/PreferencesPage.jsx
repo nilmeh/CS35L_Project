@@ -8,25 +8,55 @@ import './PreferencesPage.css';
 function PreferencesPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [mealPlan, setMealPlan] = useState(null);
+  const [mealPlans, setMealPlans] = useState([]); // Array to store multiple meal plans
+  const [currentPreferences, setCurrentPreferences] = useState(null);
   const navigate = useNavigate();
   
-  const handleSubmitPreferences = async (preferences) => {
+  const handleSubmitPreferences = async (preferences, regenerationType = 'default', variationSeed = null) => {
     console.log('🎯 PreferencesPage: Starting meal plan generation...');
     console.log('📝 Form preferences received:', preferences);
+    console.log('🔄 Regeneration type:', regenerationType);
     
     setLoading(true);
     setError(null);
     
+    // Store preferences for regeneration
+    if (regenerationType === 'default') {
+      setCurrentPreferences(preferences);
+    }
+    
     try {
       console.log('⏳ PreferencesPage: Calling API service...');
       
-      const response = await apiService.mealPlans.generate(preferences);
+      // Add regeneration parameters to the request
+      const requestData = {
+        ...preferences,
+        regenerationType,
+        variationSeed
+      };
+      
+      const response = await apiService.mealPlans.generate(requestData);
       
       console.log('🎉 PreferencesPage: API call successful!');
       console.log('📊 Meal plan response:', response);
       
-      setMealPlan(response.mealPlan);
+      // Add the new meal plan to the array
+      const newMealPlan = {
+        id: Date.now(), // Simple ID for tracking
+        mealPlan: response.mealPlan,
+        preferences: preferences,
+        variationInfo: response.mealPlan.variationInfo,
+        timestamp: new Date()
+      };
+      
+      if (regenerationType === 'default') {
+        // For new requests, replace all meal plans
+        setMealPlans([newMealPlan]);
+      } else {
+        // For regeneration, add to existing plans
+        setMealPlans(prev => [...prev, newMealPlan]);
+      }
+      
       setLoading(false);
       
       console.log('✅ PreferencesPage: State updated successfully');
@@ -47,8 +77,19 @@ function PreferencesPage() {
   };
   
   const handleRegenerate = () => {
-    setMealPlan(null);
+    if (!currentPreferences) {
+      console.error('No current preferences to regenerate');
+      return;
+    }
+    
+    console.log('🔄 Regenerating meal plan with same preferences...');
+    handleSubmitPreferences(currentPreferences, 'regenerate');
+  };
+  
+  const handleClearResults = () => {
+    setMealPlans([]);
     setError(null);
+    setCurrentPreferences(null);
   };
   
   const handleSavePlan = async (plan) => {
@@ -89,17 +130,46 @@ function PreferencesPage() {
           </div>
         )}
         
-        {mealPlan && !loading && (
-          <div className="meal-plan-section">
-            <MealPlanResults 
-              mealPlan={mealPlan} 
-              onRegenerate={handleRegenerate}
-              onSave={handleSavePlan}
-            />
+        {mealPlans.length > 0 && !loading && (
+          <div className="meal-plans-section">
+            <div className="meal-plans-header">
+              <h3>🍽️ Your Meal Plan Options</h3>
+              <div className="meal-plans-actions">
+                <button onClick={handleRegenerate} className="regenerate-button" disabled={loading}>
+                  🔄 Generate Another Option
+                </button>
+                <button onClick={handleClearResults} className="clear-button">
+                  🗑️ Clear Results
+                </button>
+              </div>
+            </div>
+            
+            <div className="meal-plans-grid">
+              {mealPlans.map((planData, index) => (
+                <div key={planData.id} className="meal-plan-option">
+                  <div className="meal-plan-header">
+                    <h4>Option {index + 1}</h4>
+                    <div className="meal-plan-meta">
+                      <span className="strategy-badge">
+                        {planData.variationInfo?.strategy || 'balanced'}
+                      </span>
+                      <span className="timestamp">
+                        {planData.timestamp.toLocaleTimeString()}
+                      </span>
+                    </div>
+                  </div>
+                  <MealPlanResults 
+                    mealPlan={planData.mealPlan} 
+                    onSave={(plan) => handleSavePlan({...plan, optionId: planData.id})}
+                    compact={mealPlans.length > 1}
+                  />
+                </div>
+              ))}
+            </div>
           </div>
         )}
         
-        {!mealPlan && !loading && !error && (
+        {mealPlans.length === 0 && !loading && !error && (
           <>
             <div className="preferences-info">
               <h3>How It Works</h3>
@@ -119,6 +189,10 @@ function PreferencesPage() {
                 <li>
                   <strong>Get personalized results</strong>
                   <p>Our algorithm will create an optimal meal plan based on available options.</p>
+                </li>
+                <li>
+                  <strong>Generate variations</strong>
+                  <p>Don't like the first option? Generate alternative meal plans with different optimization strategies.</p>
                 </li>
               </ol>
             </div>

@@ -50,8 +50,13 @@ export const generateMealPlanForUser = async (req, res) => {
       allowedTags = [],
       disallowedTags = [],
       allergens = [],
+      excludedCategories = [],
+      likedFoods = [],
+      dislikedFoods = [],
       diningHall,
-      mealTime
+      mealTime,
+      regenerationType = 'default', // 'default' or 'regenerate'
+      variationSeed
     } = req.body;
 
     // Validate input
@@ -76,7 +81,13 @@ export const generateMealPlanForUser = async (req, res) => {
       });
     }
 
-    // Generate meal plan using the algorithm
+    // Generate variation seed if this is a regenerate request
+    let finalVariationSeed = variationSeed;
+    if (regenerationType === 'regenerate' && !variationSeed) {
+      finalVariationSeed = Date.now() % 10000; // Use timestamp for uniqueness
+    }
+
+    // Generate meal plan using the algorithm with variation
     const userPreferences = {
       targetCalories,
       minProtein,
@@ -87,8 +98,13 @@ export const generateMealPlanForUser = async (req, res) => {
       allowedTags,
       disallowedTags,
       allergens,
+      excludedCategories,
+      likedFoods,
+      dislikedFoods,
       diningHall,
-      mealTime
+      mealTime,
+      variationSeed: finalVariationSeed,
+      regenerationType
     };
 
     const result = await generateMealPlan(userPreferences, menuItems);
@@ -108,7 +124,8 @@ export const generateMealPlanForUser = async (req, res) => {
         selectedItems: result.selectedItems,
         itemsByCategory: result.itemsByCategory,
         totals: result.totals,
-        warnings: result.warnings
+        warnings: result.warnings,
+        variationInfo: result.variationInfo
       },
       preferences: userPreferences,
       availableItems: menuItems.length

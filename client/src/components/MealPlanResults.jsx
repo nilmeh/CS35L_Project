@@ -1,11 +1,11 @@
 import './MealPlanResults.css';
 
-function MealPlanResults({ mealPlan, onRegenerate, onSave }) {
+function MealPlanResults({ mealPlan, onSave, compact = false }) {
   if (!mealPlan) {
     return null;
   }
 
-  const { selectedItems, itemsByCategory, totals, warnings, message } = mealPlan;
+  const { selectedItems, itemsByCategory, totals, warnings, message, variationInfo } = mealPlan;
 
   const getCategoryIcon = (category) => {
     const icons = {
@@ -53,28 +53,45 @@ function MealPlanResults({ mealPlan, onRegenerate, onSave }) {
     : [];
 
   return (
-    <div className="meal-plan-results">
+    <div className={`meal-plan-results ${compact ? 'compact' : ''}`}>
       {/* Header Section */}
-      <div className="results-header">
-        <div className="header-content">
-          <h2>🎯 Your Personalized Meal Plan</h2>
-          <p className="header-subtitle">Optimized for your nutritional goals</p>
-        </div>
-        
-        {message && (
-          <div className={`status-message ${warnings && warnings.length > 0 ? 'warning' : 'success'}`}>
-            <span className="status-icon">
-              {warnings && warnings.length > 0 ? '⚠️' : '✅'}
-            </span>
-            <span>{message}</span>
+      {!compact && (
+        <div className="results-header">
+          <div className="header-content">
+            <h2>🎯 Your Personalized Meal Plan</h2>
+            <p className="header-subtitle">Optimized for your nutritional goals</p>
+            {variationInfo && (
+              <div className="variation-info">
+                <span className="variation-strategy">Strategy: {variationInfo.strategy}</span>
+              </div>
+            )}
           </div>
-        )}
-      </div>
+          
+          {message && (
+            <div className={`status-message ${warnings && warnings.length > 0 ? 'warning' : 'success'}`}>
+              <span className="status-icon">
+                {warnings && warnings.length > 0 ? '⚠️' : '✅'}
+              </span>
+              <span>{message}</span>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Compact header for multi-plan view */}
+      {compact && variationInfo && (
+        <div className="compact-header">
+          <div className="strategy-info">
+            <span className="strategy-label">Strategy:</span>
+            <span className="strategy-name">{variationInfo.strategy}</span>
+          </div>
+        </div>
+      )}
 
       {/* Nutrition Summary Cards */}
       <div className="nutrition-overview">
-        <h3 className="section-title">📊 Nutrition Summary</h3>
-        <div className="nutrition-grid">
+        {!compact && <h3 className="section-title">📊 Nutrition Summary</h3>}
+        <div className={`nutrition-grid ${compact ? 'compact' : ''}`}>
           <div className="nutrition-card calories">
             <div className="card-icon">🔥</div>
             <div className="card-content">
@@ -131,7 +148,7 @@ function MealPlanResults({ mealPlan, onRegenerate, onSave }) {
       {/* Meal Items Section */}
       <div className="meal-items-section">
         <div className="section-header">
-          <h3 className="section-title">🍽️ Your Meal Selection</h3>
+          {!compact && <h3 className="section-title">🍽️ Your Meal Selection</h3>}
           <div className="items-count">
             <span className="count-badge">{selectedItems.length} items</span>
           </div>
@@ -152,7 +169,7 @@ function MealPlanResults({ mealPlan, onRegenerate, onSave }) {
                 
                 <div className="category-items">
                   {items.map((item, index) => (
-                    <div key={index} className="meal-item-card">
+                    <div key={index} className={`meal-item-card ${compact ? 'compact' : ''}`}>
                       <div className="item-main">
                         <div className="item-title-section">
                           <h4 className="item-name">{item.name}</h4>
@@ -169,7 +186,7 @@ function MealPlanResults({ mealPlan, onRegenerate, onSave }) {
                         </div>
                       </div>
                       
-                      <div className="item-nutrition-grid">
+                      <div className={`item-nutrition-grid ${compact ? 'compact' : ''}`}>
                         <div className="nutrition-item">
                           <span className="nutrition-label">Calories</span>
                           <span className="nutrition-value">{Math.round(item.calories)}</span>
@@ -196,7 +213,7 @@ function MealPlanResults({ mealPlan, onRegenerate, onSave }) {
         ) : (
           <div className="items-list">
             {selectedItems.map((item, index) => (
-              <div key={index} className="meal-item-card">
+              <div key={index} className={`meal-item-card ${compact ? 'compact' : ''}`}>
                 <div className="item-main">
                   <div className="item-title-section">
                     <h4 className="item-name">{item.name || `Item ${index + 1}`}</h4>
@@ -213,7 +230,7 @@ function MealPlanResults({ mealPlan, onRegenerate, onSave }) {
                   </div>
                 </div>
                 
-                <div className="item-nutrition-grid">
+                <div className={`item-nutrition-grid ${compact ? 'compact' : ''}`}>
                   <div className="nutrition-item">
                     <span className="nutrition-label">Calories</span>
                     <span className="nutrition-value">{Math.round(item.calories)}</span>
@@ -240,12 +257,6 @@ function MealPlanResults({ mealPlan, onRegenerate, onSave }) {
       {/* Action Buttons */}
       <div className="actions-section">
         <div className="actions-container">
-          {onRegenerate && (
-            <button className="action-button regenerate" onClick={onRegenerate}>
-              <span className="button-icon">🔄</span>
-              <span>Generate Another</span>
-            </button>
-          )}
           {onSave && (
             <button className="action-button save" onClick={() => onSave(mealPlan)}>
               <span className="button-icon">💾</span>

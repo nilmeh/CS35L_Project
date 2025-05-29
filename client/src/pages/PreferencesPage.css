@@ -146,6 +146,252 @@
   transform: translateY(-1px);
 }
 
+/* Meal Plans Section */
+.meal-plans-section {
+  grid-column: 1 / -1;
+  width: 100%;
+}
+
+.meal-plans-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+  padding: 1.5rem 2rem;
+  background: white;
+  border-radius: var(--border-radius-lg);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+  border: 1px solid #f0f2f5;
+}
+
+.meal-plans-header h3 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--text-color);
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.meal-plans-actions {
+  display: flex;
+  gap: 1rem;
+}
+
+.regenerate-button,
+.clear-button {
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: var(--border-radius-md);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+}
+
+.regenerate-button {
+  background: linear-gradient(135deg, var(--primary), #667eea);
+  color: white;
+  box-shadow: 0 2px 10px rgba(102, 126, 234, 0.3);
+}
+
+.regenerate-button:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+}
+
+.regenerate-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.clear-button {
+  background: #f8f9fa;
+  color: #6c757d;
+  border: 1px solid #dee2e6;
+}
+
+.clear-button:hover {
+  background: #e9ecef;
+  transform: translateY(-1px);
+}
+
+.meal-plans-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 2rem;
+}
+
+@media (min-width: 1200px) {
+  .meal-plans-grid {
+    grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+  }
+}
+
+.meal-plan-option {
+  background: white;
+  border-radius: var(--border-radius-lg);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  border: 2px solid transparent;
+  transition: all 0.3s ease;
+  overflow: hidden;
+}
+
+.meal-plan-option:hover {
+  border-color: var(--primary);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 30px rgba(74, 108, 250, 0.15);
+}
+
+.meal-plan-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 1.5rem;
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  border-bottom: 1px solid #dee2e6;
+}
+
+.meal-plan-header h4 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--text-color);
+  margin: 0;
+}
+
+.meal-plan-meta {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.strategy-badge {
+  background: linear-gradient(135deg, var(--primary), #667eea);
+  color: white;
+  padding: 0.25rem 0.75rem;
+  border-radius: 50px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: capitalize;
+}
+
+.timestamp {
+  font-size: 0.8rem;
+  color: #6c757d;
+  font-style: italic;
+}
+
+/* Compact MealPlanResults styles */
+.meal-plan-results.compact {
+  padding: 1.5rem;
+}
+
+.compact-header {
+  margin-bottom: 1rem;
+}
+
+.strategy-info {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+}
+
+.strategy-label {
+  color: #6c757d;
+  font-weight: 500;
+}
+
+.strategy-name {
+  color: var(--primary);
+  font-weight: 600;
+  text-transform: capitalize;
+}
+
+.nutrition-grid.compact {
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
+}
+
+.nutrition-grid.compact .nutrition-card {
+  padding: 1rem;
+}
+
+.nutrition-grid.compact .card-icon {
+  width: 40px;
+  height: 40px;
+  font-size: 1.2rem;
+}
+
+.nutrition-grid.compact .card-value {
+  font-size: 1.4rem;
+}
+
+.meal-item-card.compact {
+  padding: 1rem;
+}
+
+.item-nutrition-grid.compact {
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.75rem;
+}
+
+.item-nutrition-grid.compact .nutrition-item {
+  padding: 0.5rem;
+}
+
+.variation-info {
+  margin-top: 0.5rem;
+}
+
+.variation-strategy {
+  background: rgba(255, 255, 255, 0.2);
+  padding: 0.25rem 0.75rem;
+  border-radius: 50px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  text-transform: capitalize;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .meal-plans-header {
+    flex-direction: column;
+    gap: 1rem;
+    align-items: stretch;
+  }
+  
+  .meal-plans-actions {
+    justify-content: center;
+  }
+  
+  .meal-plans-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .meal-plan-header {
+    flex-direction: column;
+    gap: 0.5rem;
+    align-items: flex-start;
+  }
+  
+  .meal-plan-meta {
+    align-self: stretch;
+    justify-content: space-between;
+  }
+  
+  .regenerate-button,
+  .clear-button {
+    padding: 0.6rem 1.2rem;
+    font-size: 0.85rem;
+  }
+}
+
 /* Meal Plan Section */
 .meal-plan-section {
   background: white;
