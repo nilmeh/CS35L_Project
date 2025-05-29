@@ -6,8 +6,7 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
-// Use a default URI for testing if environment variable is not set
-const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/ucla-meal-planner';
+const MONGO_URI = process.env.MONGO_URI;
 
 function transformRawData(raw) {
   const items = [];
@@ -66,7 +65,6 @@ async function upload() {
     const docs = transformRawData(rawData);
     console.log(`Transformed ${docs.length} items for upload.`);
 
-    // Show sample of first transformed item
     if (docs.length > 0) {
       console.log('Sample transformed item:');
       console.log(JSON.stringify(docs[0], null, 2));

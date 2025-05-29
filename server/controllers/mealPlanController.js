@@ -97,7 +97,8 @@ export const generateMealPlanForUser = async (req, res) => {
       return res.status(400).json({
         message: result.message,
         selectedItems: result.selectedItems,
-        totals: result.totals
+        totals: result.totals,
+        debug: result.debug
       });
     }
 

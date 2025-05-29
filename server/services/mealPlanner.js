@@ -12,6 +12,7 @@ const STATION_CATEGORIES = {
   "The Deli": "Side",
   "The Sweet Spot": "Dessert",
   "Beverage Station": "Beverage",
+  "Greens 'N More": "Side",
   
   // De Neve Dining
   "The Front Burner": "Main Course",
@@ -24,6 +25,7 @@ const STATION_CATEGORIES = {
   "The Sweet Stop": "Dessert",
   "Frozen Yogurt": "Dessert",
   "Late Night De Neve": "Main Course",
+  "Yogurt Bar": "Dessert",
   
   // Epicuria at Covel
   "Capri": "Main Course",
@@ -204,63 +206,100 @@ function containsAnimalProducts(ingredientsText) {
  */
 function enhanceMenuData(menuData) {
   return menuData.map(item => {
+    // Convert Mongoose document to plain object
+    const plainItem = item.toObject ? item.toObject() : item;
+    
     // Make sure tags is an array
-    const tags = Array.isArray(item.tags) ? [...item.tags] : [];
+    const tags = Array.isArray(plainItem.tags) ? [...plainItem.tags] : [];
     
     // Add food category based on station and name
-    const category = detectFoodCategory(item.name, item.station);
+    const category = detectFoodCategory(plainItem.name, plainItem.station);
     if (!tags.includes(category)) {
       tags.push(category);
     }
     
     // Add allergen information as tags
-    const allergens = detectAllergens(item.ingredients);
+    const allergens = detectAllergens(plainItem.ingredients);
     allergens.forEach(allergen => {
       if (!tags.includes(allergen)) {
         tags.push(allergen);
       }
     });
     
-    // Only attempt to add vegetarian/vegan tags if we have ingredients data
-    // AND the existing tags don't already specify dietary restrictions
-    if (item.ingredients && Array.isArray(item.ingredients) && item.ingredients.length > 0) {
-      const ingredientsText = item.ingredients.join(' ').toLowerCase();
+    // Initialize vegetarian/vegan status
+    let isVegetarian = false;
+    let isVegan = false;
+    
+    // Check existing tags first for explicit dietary information
+    const hasVegetarianTag = tags.some(tag => 
+      tag.toLowerCase().includes('vegetarian') || tag.toLowerCase().includes('veg'));
+    const hasVeganTag = tags.some(tag => 
+      tag.toLowerCase().includes('vegan') || tag.toLowerCase().includes('plant-based'));
+    
+    if (hasVeganTag) {
+      isVegan = true;
+      isVegetarian = true; // vegan implies vegetarian
+      if (!tags.includes('vegan')) tags.push('vegan');
+      if (!tags.includes('vegetarian')) tags.push('vegetarian');
+    } else if (hasVegetarianTag) {
+      isVegetarian = true;
+      if (!tags.includes('vegetarian')) tags.push('vegetarian');
+    }
+    
+    // If no explicit dietary tags and we have ingredients data, try to infer
+    if (!isVegetarian && !isVegan && plainItem.ingredients && Array.isArray(plainItem.ingredients) && plainItem.ingredients.length > 0) {
+      const ingredientsText = plainItem.ingredients.join(' ').toLowerCase();
       
-      // Check for existing dietary tags
-      const hasVegetarianTag = tags.some(tag => 
-        tag.toLowerCase() === 'vegetarian' || tag.toLowerCase() === 'veg');
-      const hasVeganTag = tags.some(tag => 
-        tag.toLowerCase() === 'vegan' || tag.toLowerCase() === 'plant-based');
-      const hasNonVegTag = tags.some(tag => 
-        tag.toLowerCase() === 'meat' || tag.toLowerCase() === 'contains meat');
-      
-      // Only try to infer vegetarian status if no conflicting tags exist
-      if (!hasVegetarianTag && !hasVeganTag && !hasNonVegTag) {
-        // Use comprehensive checks for meat products
-        if (!containsMeat(ingredientsText)) {
-          tags.push('vegetarian');
-          
-          // If it's vegetarian and contains no animal products at all, it's vegan
-          if (!containsAnimalProducts(ingredientsText)) {
-            tags.push('vegan');
-          }
-        }
-      } 
-      // If it's already tagged as vegetarian but not vegan, check for vegan status
-      else if (hasVegetarianTag && !hasVeganTag) {
-        // Check for dairy, eggs, honey
-        if (!DAIRY_KEYWORDS.some(keyword => ingredientsText.includes(keyword)) &&
-            !EGG_KEYWORDS.some(keyword => ingredientsText.includes(keyword)) &&
-            !HONEY_KEYWORDS.some(keyword => ingredientsText.includes(keyword))) {
+      // Check if contains meat - if not, likely vegetarian
+      if (!containsMeat(ingredientsText)) {
+        isVegetarian = true;
+        tags.push('vegetarian');
+        
+        // If it contains no animal products at all, it's vegan
+        if (!containsAnimalProducts(ingredientsText)) {
+          isVegan = true;
           tags.push('vegan');
         }
       }
     }
     
+    // For items with missing or generic ingredients, make reasonable assumptions
+    if (!isVegetarian && (!plainItem.ingredients || plainItem.ingredients.length === 0 || 
+        plainItem.ingredients.some(ing => ing.toLowerCase().includes('custom recipe')))) {
+      
+      const itemName = plainItem.name.toLowerCase();
+      
+      // Check if name suggests it's vegetarian/vegan
+      const vegKeywords = ['salad', 'vegetable', 'fruit', 'rice', 'pasta', 'bread', 'soup'];
+      const veganKeywords = ['vegetable', 'fruit', 'rice', 'beans', 'quinoa'];
+      const meatKeywords = ['chicken', 'beef', 'pork', 'fish', 'turkey', 'lamb', 'meat', 'bacon', 'ham'];
+      
+      const likelyMeat = meatKeywords.some(keyword => itemName.includes(keyword));
+      const likelyVeg = vegKeywords.some(keyword => itemName.includes(keyword));
+      const likelyVegan = veganKeywords.some(keyword => itemName.includes(keyword));
+      
+      if (!likelyMeat) {
+        if (likelyVegan) {
+          isVegan = true;
+          isVegetarian = true;
+          tags.push('vegan', 'vegetarian');
+        } else if (likelyVeg) {
+          isVegetarian = true;
+          tags.push('vegetarian');
+        } else {
+          // Default to vegetarian for ambiguous items to be inclusive
+          isVegetarian = true;
+          tags.push('vegetarian');
+        }
+      }
+    }
+    
     return {
-      ...item,
+      ...plainItem,
       tags,
-      category
+      category,
+      isVegetarian,
+      isVegan
     };
   });
 }
@@ -300,54 +339,96 @@ export function generateMealPlan(userPreferences, menuData) {
 
     // Filter menu items based on user preferences
     const filteredMenu = enhancedMenuData.filter(item => {
-        // Check dietary restrictions
-        const isVeg = !vegetarian || item.tags.some(tag => 
-            tag.toLowerCase() === 'vegetarian' || tag.toLowerCase() === 'veg');
-        const isVegan = !vegan || item.tags.some(tag => 
-            tag.toLowerCase() === 'vegan' || tag.toLowerCase() === 'plant-based');
+        // Check dietary restrictions - if user wants vegetarian/vegan, check if item qualifies
+        const passesVegetarianCheck = !vegetarian || item.isVegetarian;
+        const passesVeganCheck = !vegan || item.isVegan;
         
-        // Check location and meal time - updated for new model structure
-        const matchesLocation = !diningHall || item.dining_hall === diningHall;
-        const matchesTime = !mealTime || item.meal_period === mealTime;
+        // Check location and meal time - handle both old and new model structures
+        const matchesLocation = !diningHall || 
+                               item.dining_hall === diningHall || 
+                               item.location === diningHall;
+        const matchesTime = !mealTime || 
+                           item.meal_period === mealTime || 
+                           item.mealTime === mealTime;
         
         // Check allowed and disallowed tags
         const hasAllowedTags = allowedTags.length === 0 || 
                               allowedTags.some(tag => item.tags.some(itemTag => 
-                                itemTag.toLowerCase() === tag.toLowerCase()));
+                                itemTag.toLowerCase().includes(tag.toLowerCase())));
                                 
         const hasNoDisallowedTags = !disallowedTags.some(tag => item.tags.some(itemTag => 
-            itemTag.toLowerCase() === tag.toLowerCase()));
+            itemTag.toLowerCase().includes(tag.toLowerCase())));
         
-        // Check allergens - if user specifies allergens, exclude items with those allergens
+        // Check allergens - if user specifies allergens to avoid, exclude items with those allergens
         const hasNoAllergens = allergens.length === 0 || 
-                              !allergens.some(allergen => item.tags.some(tag => 
-                                tag.toLowerCase() === allergen.toLowerCase()));
+                              !allergens.some(allergen => {
+                                  // Check both allergens array and tags for allergen info
+                                  const inAllergensList = item.allergens && item.allergens.some(itemAllergen => 
+                                      itemAllergen.toLowerCase().includes(allergen.toLowerCase()));
+                                  const inTags = item.tags.some(tag => 
+                                      tag.toLowerCase().includes(allergen.toLowerCase()));
+                                  return inAllergensList || inTags;
+                              });
         
-        return isVeg && isVegan && matchesLocation && matchesTime && 
+        const passes = passesVegetarianCheck && passesVeganCheck && matchesLocation && matchesTime && 
                hasAllowedTags && hasNoDisallowedTags && hasNoAllergens;
+        
+        return passes;
     });
 
-    // If no items match the filter criteria, return error
+    // If no items match the filter criteria, return error with debug info
     if (filteredMenu.length === 0) {
         return {
             success: false,
             message: "No items match your dietary preferences. Try adjusting your filters.",
             selectedItems: [],
-            totals: { calories: 0, protein: 0, sugar: 0, fat: 0 }
+            totals: { calories: 0, protein: 0, sugar: 0, fat: 0 },
+            debug: {
+                totalItems: enhancedMenuData.length,
+                preferences: userPreferences,
+                sampleItem: enhancedMenuData[0] ? {
+                    name: enhancedMenuData[0].name,
+                    dining_hall: enhancedMenuData[0].dining_hall,
+                    meal_period: enhancedMenuData[0].meal_period,
+                    isVegetarian: enhancedMenuData[0].isVegetarian,
+                    tags: enhancedMenuData[0].tags
+                } : null
+            }
         };
     }
 
-    // Score menu items based on nutritional value - updated to use nutrition object
+    // Score menu items based on nutritional value and estimated calories
     const scored = filteredMenu.map(item => {
-        const calories = item.nutrition?.fat * 9 + item.nutrition?.protein * 4 + item.nutrition?.carbs * 4 || 1;
+        // Use existing calories if available, otherwise estimate from macros
+        let calories = item.calories || item.calculatedCalories;
+        if (!calories || calories === 0) {
+            // Estimate calories based on typical values for food items
+            const protein = item.nutrition?.protein || 0;
+            const fat = item.nutrition?.fat || 0;
+            const carbs = item.nutrition?.carbs || 0;
+            
+            if (protein + fat + carbs > 0) {
+                calories = (protein * 4) + (fat * 9) + (carbs * 4);
+            } else {
+                // Fallback: estimate based on food category and name
+                const category = item.category || detectFoodCategory(item.name, item.station);
+                if (category === "Dessert") calories = 250;
+                else if (category === "Main Course") calories = 350;
+                else if (category === "Side") calories = 150;
+                else if (category === "Soup") calories = 100;
+                else if (category === "Beverage") calories = 50;
+                else calories = 200; // default
+            }
+        }
+        
         const protein = item.nutrition?.protein || 0;
         const sugar = item.nutrition?.sugar || 0;
         const fat = item.nutrition?.fat || 0;
         
         // Calculate nutrition score - higher protein is good, lower sugar and fat is good
-        const proteinScore = (protein / calories) * 0.6;
-        const sugarPenalty = (sugar / calories) * 0.25;
-        const fatPenalty = (fat / calories) * 0.15;
+        const proteinScore = calories > 0 ? (protein / calories) * 0.6 : 0;
+        const sugarPenalty = calories > 0 ? (sugar / calories) * 0.25 : 0;
+        const fatPenalty = calories > 0 ? (fat / calories) * 0.15 : 0;
         
         const score = proteinScore - sugarPenalty - fatPenalty;
         
@@ -472,9 +553,15 @@ export function generateMealPlan(userPreferences, menuData) {
                 itemCount[item.name] = previousServings + servings;
                 categoryCount[category] = (categoryCount[category] || 0) + servings;
                 
-                // If this is a new item, add it to selected items
-                if (!usedItems.has(item.name)) {
-                    usedItems.add(item.name);
+                // Find existing item or add new one
+                const existingItemIndex = selectedItems.findIndex(si => si.name === item.name);
+                if (existingItemIndex >= 0) {
+                    selectedItems[existingItemIndex].servings += servings;
+                    selectedItems[existingItemIndex].calories += calories * servings;
+                    selectedItems[existingItemIndex].protein += protein * servings;
+                    selectedItems[existingItemIndex].sugar += sugar * servings;
+                    selectedItems[existingItemIndex].fat += fat * servings;
+                } else {
                     selectedItems.push({
                         name: item.name,
                         servings: servings,
@@ -486,67 +573,53 @@ export function generateMealPlan(userPreferences, menuData) {
                         dining_hall: item.dining_hall,
                         station: item.station
                     });
-                } else {
-                    // Otherwise increase servings of existing item
-                    const existingItem = selectedItems.find(i => i.name === item.name);
-                    if (existingItem) {
-                        existingItem.servings += servings;
-                        existingItem.calories += calories * servings;
-                        existingItem.protein += protein * servings;
-                        existingItem.sugar += sugar * servings;
-                        existingItem.fat += fat * servings;
-                    }
                 }
             }
 
-            // Stop if we've reached our calorie goal
+            // If we've reached our calorie target, stop
             if (totals.calories >= targetCalories * 0.95) break;
         }
     }
 
-    // Check if nutritional targets were met
-    const calorieDiff = Math.round(totals.calories - targetCalories);
-    const withinCalorieRange = totals.calories >= targetCalories * 0.95 && totals.calories <= targetCalories * 1.05;
-    const metProtein = totals.protein >= minProtein;
-    const underSugar = !maxSugar || totals.sugar <= maxSugar * 1.1;
-    const underFat = !maxFat || totals.fat <= maxFat * 1.1;
-
-    // Add warnings if targets not met
-    if (!withinCalorieRange) {
-        warnings.push(`Calorie target not fully met (${Math.round(totals.calories)} vs ${targetCalories}, diff: ${calorieDiff})`);
+    // Generate warnings if targets aren't met
+    if (totals.calories < targetCalories * 0.8) {
+        warnings.push(`Could not reach target calories (${Math.round(totals.calories)} vs ${Math.round(targetCalories)}). Consider increasing meal variety or reducing restrictions.`);
     }
-    if (!metProtein) {
-        warnings.push(`Protein target not met (${Math.round(totals.protein)}g vs ${minProtein}g)`);
+    if (totals.protein < minProtein * 0.8) {
+        warnings.push(`Could not reach minimum protein target (${Math.round(totals.protein)}g vs ${Math.round(minProtein)}g). Consider adding more protein-rich foods.`);
     }
-    if (!underSugar) {
-        warnings.push(`Sugar limit exceeded (${Math.round(totals.sugar)}g vs ${maxSugar}g)`);
+    if (maxSugar && totals.sugar > maxSugar) {
+        warnings.push(`Sugar content exceeds limit (${Math.round(totals.sugar)}g vs ${Math.round(maxSugar)}g max).`);
     }
-    if (!underFat) {
-        warnings.push(`Fat limit exceeded (${Math.round(totals.fat)}g vs ${maxFat}g)`);
+    if (maxFat && totals.fat > maxFat) {
+        warnings.push(`Fat content exceeds limit (${Math.round(totals.fat)}g vs ${Math.round(maxFat)}g max).`);
     }
 
-    // Group selected items by category for better presentation
-    const itemsByCategory = {};
-    selectedItems.forEach(item => {
-        if (!itemsByCategory[item.category]) {
-            itemsByCategory[item.category] = [];
-        }
-        itemsByCategory[item.category].push(item);
+    // Round totals for cleaner display
+    Object.keys(totals).forEach(key => {
+        totals[key] = Math.round(totals[key]);
     });
+
+    // Group items by category for better organization
+    const itemsByCategory = selectedItems.reduce((acc, item) => {
+        if (!acc[item.category]) {
+            acc[item.category] = [];
+        }
+        acc[item.category].push(item);
+        return acc;
+    }, {});
+
+    let message = "Meal plan generated successfully!";
+    if (warnings.length > 0) {
+        message = "Meal plan generated with some limitations. See warnings below.";
+    }
 
     return {
         success: true,
+        message,
         selectedItems,
         itemsByCategory,
-        totals: {
-            calories: Math.round(totals.calories),
-            protein: Math.round(totals.protein),
-            sugar: Math.round(totals.sugar),
-            fat: Math.round(totals.fat)
-        },
-        warnings,
-        message: warnings.length > 0
-            ? `Meal plan generated with some warnings.`
-            : `Optimal meal plan generated with ${selectedItems.length} items.`
+        totals,
+        warnings
     };
 }
