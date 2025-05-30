@@ -99,6 +99,20 @@ export const apiService = {
       return response.data;
     },
   },
+
+  // User-related endpoints
+  users: {
+    // Register new user
+    signup: async (userData) => {
+      const response = await api.post('/users/signup', userData);
+      return response.data;
+    },
+    // Login (fetch user profile by firebaseId)
+    login: async (firebaseId) => {
+      const response = await api.post('/users/login', { firebaseId });
+      return response.data;
+    },
+  },
 };
 
 // Helper function to handle API errors
@@ -132,4 +146,4 @@ export const MEAL_PERIODS = [
   'dinner'
 ];
 
-export default apiService; 
+export default apiService;
