@@ -1,6 +1,7 @@
 import mongoose from 'mongoose';
 
 const menuItemSchema = new mongoose.Schema({
+  date: { type: Date, required: true},
   dining_hall: { type: String, required: true },
   meal_period: { type: String, enum: ['breakfast', 'lunch', 'dinner'], required: true },
   name: { type: String, required: true },

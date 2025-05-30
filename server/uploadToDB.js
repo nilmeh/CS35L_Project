@@ -22,31 +22,34 @@ function transformRawData(raw) {
     }
     return 0;
   };
+  
+  for(const [date, dateData] of Object.entries(raw)) {
+    for (const [meal_period, halls] of Object.entries(dateData.meals)) {
+      for (const [dining_hall, entries] of Object.entries(halls)) {
+        for (const entry of entries) {
+          const item = {
+            date: new Date(date),
+            dining_hall,
+            meal_period,
+            name: entry.name || '',
+            station: entry.station || '',
+            tags: entry.tags || [],
+            ingredients: entry.ingredients || [],
+            allergens: entry.allergens || [],
+            nutrition: {
+              protein: parseNutrition(entry.protein),
+              fat: parseNutrition(entry.fat),
+              carbs: parseNutrition(entry.carbs),
+              sugar: parseNutrition(entry.sugar)
+            }
+          };
 
-  for (const [meal_period, halls] of Object.entries(raw)) {
-    for (const [dining_hall, entries] of Object.entries(halls)) {
-      for (const entry of entries) {
-        const item = {
-          dining_hall,
-          meal_period,
-          name: entry.name || '',
-          station: entry.station || '',
-          tags: entry.tags || [],
-          ingredients: entry.ingredients || [],
-          allergens: entry.allergens || [],
-          nutrition: {
-            protein: parseNutrition(entry.protein),
-            fat: parseNutrition(entry.fat),
-            carbs: parseNutrition(entry.carbs),
-            sugar: parseNutrition(entry.sugar)
-          }
-        };
-
-        items.push(item);
+          items.push(item);
+        }
       }
     }
   }
-
+  console.log(`Total items processed: ${items.length}`);
   return items;
 }
 
