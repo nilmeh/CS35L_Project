@@ -20,6 +20,7 @@ export const apiService = {
       const params = new URLSearchParams();
       if (filters.dining_hall) params.append('dining_hall', filters.dining_hall);
       if (filters.meal_period) params.append('meal_period', filters.meal_period);
+      if (filters.date) params.append('date', filters.date);
       
       const response = await api.get(`/menu?${params}`);
       return response.data;
@@ -31,6 +32,7 @@ export const apiService = {
       params.append('query', query);
       if (filters.dining_hall) params.append('dining_hall', filters.dining_hall);
       if (filters.meal_period) params.append('meal_period', filters.meal_period);
+      if (filters.date) params.append('date', filters.date);
       
       const response = await api.get(`/menu/search?${params}`);
       return response.data;
@@ -40,6 +42,14 @@ export const apiService = {
     getById: async (id) => {
       const response = await api.get(`/menu/${id}`);
       return response.data;
+    },
+
+    // Get available dates
+    getAvailableDates: async () => {
+      const response = await api.get('/menu');
+      const items = response.data;
+      const dates = [...new Set(items.map(item => item.date))].sort();
+      return dates;
     },
   },
 

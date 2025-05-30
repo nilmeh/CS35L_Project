@@ -55,6 +55,7 @@ export const generateMealPlanForUser = async (req, res) => {
       dislikedFoods = [],
       diningHall,
       mealTime,
+      date,
       regenerationType = 'default', // 'default' or 'regenerate'
       variationSeed
     } = req.body;
@@ -71,6 +72,19 @@ export const generateMealPlanForUser = async (req, res) => {
     const filter = {};
     if (diningHall) filter.dining_hall = diningHall;
     if (mealTime) filter.meal_period = mealTime;
+    
+    // Add date filtering if provided
+    if (date) {
+      // Parse the date and create a range for the entire day
+      const startDate = new Date(date);
+      const endDate = new Date(date);
+      endDate.setDate(endDate.getDate() + 1);
+      
+      filter.date = {
+        $gte: startDate,
+        $lt: endDate
+      };
+    }
 
     const menuItems = await MenuItem.find(filter);
 

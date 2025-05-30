@@ -1,8 +1,9 @@
-import { useState } from 'react';
-import { DINING_HALLS, MEAL_PERIODS } from '../services/api';
+import { useState, useEffect } from 'react';
+import { DINING_HALLS, MEAL_PERIODS, apiService } from '../services/api';
 import './PreferencesForm.css';
 
 function PreferencesForm({ onSubmit, isLoading = false }) {
+  const [availableDates, setAvailableDates] = useState([]);
   const [preferences, setPreferences] = useState({
     targetCalories: 2000,
     minProtein: 50,
@@ -17,7 +18,8 @@ function PreferencesForm({ onSubmit, isLoading = false }) {
     allergens: [],
     excludedCategories: [],
     diningHall: "",
-    mealTime: "lunch"
+    mealTime: "lunch",
+    date: ""
   });
 
   // Separate state for the raw input strings
@@ -44,8 +46,52 @@ function PreferencesForm({ onSubmit, isLoading = false }) {
     { value: 'Appetizer', label: 'Appetizer', icon: '🥨' }
   ];
 
+  // Fetch available dates on component mount
+  useEffect(() => {
+    fetchAvailableDates();
+  }, []);
+
+  // Set default date when available dates are loaded
+  useEffect(() => {
+    if (availableDates.length > 0 && !preferences.date) {
+      setPreferences(prev => ({
+        ...prev,
+        date: availableDates[0] // Default to first available date
+      }));
+    }
+  }, [availableDates]);
+
+  const fetchAvailableDates = async () => {
+    try {
+      const dates = await apiService.menu.getAvailableDates();
+      setAvailableDates(dates);
+    } catch (error) {
+      console.error('Error fetching available dates:', error);
+    }
+  };
+
+  const formatDate = (dateString) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', { 
+      weekday: 'long',
+      year: 'numeric', 
+      month: 'long', 
+      day: 'numeric' 
+    });
+  };
+
+  const isToday = (dateString) => {
+    const today = new Date();
+    const date = new Date(dateString);
+    return today.toDateString() === date.toDateString();
+  };
+
   const validateForm = () => {
     const newErrors = {};
+    
+    if (!preferences.date) {
+      newErrors.date = 'Please select a date for your meal plan';
+    }
     
     if (preferences.targetCalories < 400 || preferences.targetCalories > 4000) {
       newErrors.targetCalories = 'Calories must be between 800 and 4000';
@@ -364,7 +410,28 @@ function PreferencesForm({ onSubmit, isLoading = false }) {
       </div>
 
       <div className="form-section">
-        <h3>Dining Options</h3>
+        <h3>📅 Meal Scheduling & Dining Options</h3>
+
+        <div className="form-group">
+          <label htmlFor="date">Select Date:</label>
+          <select 
+            id="date" 
+            name="date" 
+            value={preferences.date} 
+            onChange={handleChange}
+          >
+            {availableDates.length === 0 ? (
+              <option value="">Loading available dates...</option>
+            ) : (
+              availableDates.map(date => (
+                <option key={date} value={date}>
+                  {formatDate(date)} {isToday(date) && '(Today)'}
+                </option>
+              ))
+            )}
+          </select>
+          {errors.date && <span className="error">{errors.date}</span>}
+        </div>
   
         <div className="form-group">
           <label htmlFor="diningHall">Preferred Dining Hall:</label>
@@ -398,8 +465,11 @@ function PreferencesForm({ onSubmit, isLoading = false }) {
         </div>
       </div>
   
-      <button type="submit" className="generate-button" disabled={isLoading}>
-        {isLoading ? 'Generating...' : 'Generate Meal Plan'}
+      <button type="submit" className="generate-button" disabled={isLoading || !preferences.date}>
+        {isLoading ? 'Generating...' : 
+         preferences.date ? 
+           `Generate Meal Plan for ${formatDate(preferences.date)}` : 
+           'Select a Date to Generate Meal Plan'}
       </button>
     </form>
   );

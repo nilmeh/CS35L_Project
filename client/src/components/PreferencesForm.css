@@ -475,4 +475,42 @@
   .preference-preview {
     padding: 0.5rem;
   }
+}
+
+/* Special styling for date selection */
+.form-group:has(#date) {
+  background: linear-gradient(135deg, rgba(74, 108, 250, 0.05) 0%, rgba(102, 126, 234, 0.05) 100%);
+  padding: 1.5rem;
+  border-radius: var(--border-radius-lg);
+  border: 2px solid rgba(74, 108, 250, 0.1);
+  margin-bottom: 1.5rem;
+  position: relative;
+}
+
+.form-group:has(#date) label {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--primary);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.form-group:has(#date) label::before {
+  content: '📅';
+  font-size: 1.2rem;
+}
+
+.form-group:has(#date) select {
+  border: 2px solid var(--primary);
+  background: white;
+  font-weight: 600;
+  font-size: 1rem;
+  padding: 1rem;
+  box-shadow: 0 4px 15px rgba(74, 108, 250, 0.1);
+}
+
+.form-group:has(#date) select:focus {
+  box-shadow: 0 0 0 4px rgba(74, 108, 250, 0.15);
+  transform: translateY(-1px);
 } 

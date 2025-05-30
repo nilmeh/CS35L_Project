@@ -5,6 +5,8 @@ import './MenuPage.css';
 function MenuPage() {
   const [selectedMealTime, setSelectedMealTime] = useState('breakfast');
   const [selectedDiningHall, setSelectedDiningHall] = useState('');
+  const [selectedDate, setSelectedDate] = useState('');
+  const [availableDates, setAvailableDates] = useState([]);
   const [menuItems, setMenuItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -19,16 +21,42 @@ function MenuPage() {
   ];
 
   useEffect(() => {
-    fetchMenuData();
-  }, [selectedMealTime, selectedDiningHall]);
+    fetchAvailableDates();
+  }, []);
+
+  useEffect(() => {
+    if (availableDates.length > 0 && !selectedDate) {
+      // Default to the first available date (usually today)
+      setSelectedDate(availableDates[0]);
+    }
+  }, [availableDates]);
+
+  useEffect(() => {
+    if (selectedDate) {
+      fetchMenuData();
+    }
+  }, [selectedMealTime, selectedDiningHall, selectedDate]);
+
+  const fetchAvailableDates = async () => {
+    try {
+      const dates = await apiService.menu.getAvailableDates();
+      setAvailableDates(dates);
+    } catch (error) {
+      console.error('Error fetching available dates:', error);
+      setError('Failed to load available dates');
+    }
+  };
 
   const fetchMenuData = async () => {
+    if (!selectedDate) return;
+    
     setLoading(true);
     setError(null);
     
     try {
       const filters = {
-        meal_period: selectedMealTime
+        meal_period: selectedMealTime,
+        date: selectedDate
       };
       
       if (selectedDiningHall) {
@@ -51,12 +79,15 @@ function MenuPage() {
       return;
     }
     
+    if (!selectedDate) return;
+    
     setLoading(true);
     setError(null);
     
     try {
       const filters = {
-        meal_period: selectedMealTime
+        meal_period: selectedMealTime,
+        date: selectedDate
       };
       
       if (selectedDiningHall) {
@@ -123,6 +154,22 @@ function MenuPage() {
     return ingredients.join(', ');
   };
 
+  const formatDate = (dateString) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', { 
+      weekday: 'long',
+      year: 'numeric', 
+      month: 'long', 
+      day: 'numeric' 
+    });
+  };
+
+  const isToday = (dateString) => {
+    const today = new Date();
+    const date = new Date(dateString);
+    return today.toDateString() === date.toDateString();
+  };
+
   if (loading) {
     return (
       <div className="menu-page">
@@ -154,7 +201,12 @@ function MenuPage() {
     <div className="menu-page">
       <div className="menu-header">
         <h1>UCLA Dining Menus</h1>
-        <p>Explore today's fresh options from UCLA dining halls</p>
+        <p>
+          {selectedDate ? 
+            `Explore delicious options for ${formatDate(selectedDate)}${isToday(selectedDate) ? ' (Today)' : ''}` :
+            'Loading available dates...'
+          }
+        </p>
       </div>
 
       <div className="menu-filters">
@@ -183,6 +235,21 @@ function MenuPage() {
             <option value="">All Dining Halls</option>
             {DINING_HALLS.map(hall => (
               <option key={hall} value={hall}>{hall}</option>
+            ))}
+          </select>
+        </div>
+
+        <div className="filter-group">
+          <label htmlFor="date">Date:</label>
+          <select
+            id="date"
+            value={selectedDate}
+            onChange={(e) => setSelectedDate(e.target.value)}
+          >
+            {availableDates.map(date => (
+              <option key={date} value={date}>
+                {formatDate(date)} {isToday(date) && '(Today)'}
+              </option>
             ))}
           </select>
         </div>

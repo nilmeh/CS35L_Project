@@ -2,12 +2,25 @@ import MenuItem from "../models/MenuItem.js";
 
 export const getAllMenuItems = async (req, res) => {
   try {
-    const { dining_hall, meal_period } = req.query;
+    const { dining_hall, meal_period, date } = req.query;
     
     // Build filter object based on query parameters
     const filter = {};
     if (dining_hall) filter.dining_hall = dining_hall;
     if (meal_period) filter.meal_period = meal_period;
+    
+    // Add date filtering if provided
+    if (date) {
+      // Parse the date and create a range for the entire day
+      const startDate = new Date(date);
+      const endDate = new Date(date);
+      endDate.setDate(endDate.getDate() + 1);
+      
+      filter.date = {
+        $gte: startDate,
+        $lt: endDate
+      };
+    }
 
     const menuItems = await MenuItem.find(filter);
     res.status(200).json(menuItems);
@@ -70,11 +83,24 @@ export const getMenuItemById = async (req, res) => {
 
 export const searchMenuItems = async (req, res) => {
   try {
-    const { query, dining_hall, meal_period } = req.query;
+    const { query, dining_hall, meal_period, date } = req.query;
     
     const filter = {};
     if (dining_hall) filter.dining_hall = dining_hall;
     if (meal_period) filter.meal_period = meal_period;
+    
+    // Add date filtering if provided
+    if (date) {
+      // Parse the date and create a range for the entire day
+      const startDate = new Date(date);
+      const endDate = new Date(date);
+      endDate.setDate(endDate.getDate() + 1);
+      
+      filter.date = {
+        $gte: startDate,
+        $lt: endDate
+      };
+    }
     
     if (query) {
       filter.$or = [
