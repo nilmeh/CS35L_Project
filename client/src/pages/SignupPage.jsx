@@ -8,9 +8,14 @@ function SignupPage() {
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
+    username: '',
     email: '',
     password: '',
     confirmPassword: '',
+    allergens: [],
+    vegetarian: false,
+    vegan: false,
+    dietaryRestrictions: [],
     agreedToTerms: false
   });
   const [loading, setLoading] = useState(false);
@@ -21,15 +26,26 @@ function SignupPage() {
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: type === 'checkbox' ? checked : value
-    }));
-    if (errors[name]) {
-      setErrors(prev => ({
+    if (type === 'checkbox' && (name === 'vegetarian' || name === 'vegan')) {
+      setFormData(prev => ({
         ...prev,
-        [name]: ''
+        [name]: checked,
+        // If vegan is checked, vegetarian must also be true
+        ...(name === 'vegan' && checked ? { vegetarian: true } : {})
       }));
+    } else if (type === 'checkbox' && name === 'agreedToTerms') {
+      setFormData(prev => ({ ...prev, [name]: checked }));
+    } else if (type === 'select-multiple' && name === 'allergens') {
+      const options = Array.from(e.target.selectedOptions, option => option.value);
+      setFormData(prev => ({ ...prev, allergens: options }));
+    } else if (type === 'select-multiple' && name === 'dietaryRestrictions') {
+      const options = Array.from(e.target.selectedOptions, option => option.value);
+      setFormData(prev => ({ ...prev, dietaryRestrictions: options }));
+    } else {
+      setFormData(prev => ({ ...prev, [name]: value }));
+    }
+    if (errors[name]) {
+      setErrors(prev => ({ ...prev, [name]: '' }));
     }
   };
 
@@ -46,6 +62,12 @@ function SignupPage() {
       newErrors.lastName = 'Last name is required';
     } else if (formData.lastName.trim().length < 2) {
       newErrors.lastName = 'Last name must be at least 2 characters';
+    }
+
+    if (!formData.username.trim()) {
+      newErrors.username = 'Username is required';
+    } else if (formData.username.trim().length < 2) {
+      newErrors.username = 'Username must be at least 2 characters';
     }
 
     if (!formData.email) {
@@ -80,13 +102,25 @@ function SignupPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
     if (!validateForm()) return;
-
     setLoading(true);
-    
     try {
-      await createUserWithEmailAndPassword(auth, formData.email, formData.password);
+      // Create Firebase user
+      const userCredential = await createUserWithEmailAndPassword(auth, formData.email, formData.password);
+      const firebaseId = userCredential.user.uid;
+      // Compose user data for backend
+      const userData = {
+        firebaseId,
+        name: `${formData.firstName} ${formData.lastName}`.trim(),
+        username: formData.username,
+        email: formData.email,
+        allergens: formData.allergens,
+        vegetarian: formData.vegetarian,
+        vegan: formData.vegan,
+        dietaryRestrictions: formData.dietaryRestrictions
+      };
+      // Register user in backend
+      await apiService.users.signup(userData);
       navigate('/preferences');
     } catch (error) {
       setErrors({ general: error.message });
@@ -147,6 +181,20 @@ function SignupPage() {
                 />
                 {errors.lastName && <div className="error-message">{errors.lastName}</div>}
               </div>
+            </div>
+            <div className="form-group">
+              <label htmlFor="username">Username</label>
+              <input
+                type="text"
+                id="username"
+                name="username"
+                value={formData.username}
+                onChange={handleChange}
+                className={errors.username ? 'error' : ''}
+                disabled={loading}
+                autoComplete="username"
+              />
+              {errors.username && <div className="error-message">{errors.username}</div>}
             </div>
             <div className="form-group">
               <label htmlFor="email">UCLA Email</label>
@@ -211,6 +259,68 @@ function SignupPage() {
                 </button>
               </div>
               {errors.confirmPassword && <div className="error-message">{errors.confirmPassword}</div>}
+            </div>
+            <div className="form-group">
+              <label htmlFor="allergens">Allergens (hold Ctrl/Cmd to select multiple)</label>
+              <select
+                id="allergens"
+                name="allergens"
+                multiple
+                value={formData.allergens}
+                onChange={handleChange}
+                className="allergens-select"
+                disabled={loading}
+              >
+                <option value="peanuts">Peanuts</option>
+                <option value="tree nuts">Tree Nuts</option>
+                <option value="dairy">Dairy</option>
+                <option value="eggs">Eggs</option>
+                <option value="soy">Soy</option>
+                <option value="wheat">Wheat</option>
+                <option value="fish">Fish</option>
+                <option value="shellfish">Shellfish</option>
+                <option value="sesame">Sesame</option>
+              </select>
+            </div>
+            <div className="form-group">
+              <label htmlFor="dietaryRestrictions">Dietary Restrictions (hold Ctrl/Cmd to select multiple)</label>
+              <select
+                id="dietaryRestrictions"
+                name="dietaryRestrictions"
+                multiple
+                value={formData.dietaryRestrictions}
+                onChange={handleChange}
+                className="dietary-select"
+                disabled={loading}
+              >
+                <option value="kosher">Kosher</option>
+                <option value="halal">Halal</option>
+                <option value="gluten-free">Gluten-Free</option>
+                <option value="pescatarian">Pescatarian</option>
+                <option value="none">None</option>
+              </select>
+            </div>
+            <div className="form-group">
+              <label>
+                <input
+                  type="checkbox"
+                  name="vegetarian"
+                  checked={formData.vegetarian}
+                  onChange={handleChange}
+                  disabled={loading}
+                />
+                Vegetarian
+              </label>
+              <label style={{ marginLeft: '1rem' }}>
+                <input
+                  type="checkbox"
+                  name="vegan"
+                  checked={formData.vegan}
+                  onChange={handleChange}
+                  disabled={loading}
+                />
+                Vegan
+              </label>
             </div>
             <div className="form-group terms-agreement">
               <input

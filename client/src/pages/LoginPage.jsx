@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
 import { auth } from '../services/firebase';
+import apiService from '../services/apiService'; // Import the API service
 import './LoginPage.css';
 
 function LoginPage() {
@@ -56,7 +57,12 @@ function LoginPage() {
     setLoading(true);
     
     try {
-      await signInWithEmailAndPassword(auth, formData.email, formData.password);
+      // Sign in with Firebase
+      const userCredential = await signInWithEmailAndPassword(auth, formData.email, formData.password);
+      const firebaseId = userCredential.user.uid;
+      // Fetch user profile from backend
+      const userProfile = await apiService.users.login(firebaseId);
+      // Optionally store userProfile in context or localStorage
       navigate('/preferences');
     } catch (error) {
       setErrors({ general: error.message });
