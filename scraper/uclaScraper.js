@@ -1,7 +1,7 @@
-// Scrapes UCLA Dining menus for every dining hall & meal period.
+// Scrapes UCLA Dining menus for every dining hall & meal period across multiple days.
 // Captures: name, meal period, dining hall, station / concept heading,
 // recipe URL, full nutrition, ingredient list, declared allergens, and logo
-// tags (e.g. “Contains Wheat”, “Vegetarian”). 
+// tags (e.g. "Contains Wheat", "Vegetarian"). 
 // Run with:  node uclaScraper.js
 
 const fs     = require('fs');
@@ -13,6 +13,43 @@ const { URL } = require('url');
 async function waitFor(driver, css, timeout = 20000) {
   await driver.wait(until.elementLocated(By.css(css)), timeout);
   return driver.findElement(By.css(css));
+}
+
+// helper: get all available dates from the dropdown
+async function getAvailableDates(driver) {
+  try {
+    const select = await waitFor(driver, '#jump-to-date');
+    const options = await select.findElements(By.css('option[value]:not([value=""])'));
+    
+    const dates = [];
+    for (const option of options) {
+      const value = await option.getAttribute('value');
+      const text = await option.getText();
+      if (value) {
+        dates.push({ value, text });
+      }
+    }
+    console.log(`Found ${dates.length} available dates`);
+    return dates;
+  } catch (error) {
+    console.warn('Could not find date selector, using current date only');
+    return [{ value: null, text: 'Current Date' }];
+  }
+}
+
+// helper: select a specific date
+async function selectDate(driver, dateValue) {
+  if (!dateValue) return true; // Current date already selected
+  
+  try {
+    const select = await waitFor(driver, '#jump-to-date');
+    await select.findElement(By.css(`option[value="${dateValue}"]`)).click();
+    await driver.sleep(1500); // Wait for page to reload with new date
+    return true;
+  } catch (error) {
+    console.warn(`Failed to select date ${dateValue}:`, error.message);
+    return false;
+  }
 }
 
 // helper: parse nutrition tables
@@ -80,7 +117,7 @@ async function parseIngredientsAndAllergens(driver) {
   }
 }
 
-// helper: logo-tags (“Contains Wheat”, etc.) 
+// helper: logo-tags ("Contains Wheat", etc.) 
 async function parseMetadataTags(driver) {
   const tags = [];
   for (const el of await driver.findElements(By.css('.single-metadata-item-wrapper'))) {
@@ -140,49 +177,70 @@ const PERIODS = ['breakfast', 'lunch', 'dinner'];
     .build();
 
   const results = [];
+  let availableDates = []; // Move declaration outside try block
 
   try {
-    for (const [hall, path] of Object.entries(halls)) {
-      console.log(`\n=== ${hall} ===`);
-      await driver.get(new URL(path, baseURL).href);
-      await waitFor(driver, '.force-left-full-width');   // page ready
+    // First, get all available dates by visiting any dining hall page
+    const firstHall = Object.entries(halls)[0];
+    await driver.get(new URL(firstHall[1], baseURL).href);
+    await waitFor(driver, '.force-left-full-width');
+    
+    availableDates = await getAvailableDates(driver);
+    
+    for (const dateInfo of availableDates) {
+      console.log(`\n\n==== SCRAPING FOR: ${dateInfo.text} ====`);
+      
+      for (const [hall, path] of Object.entries(halls)) {
+        console.log(`\n=== ${hall} ===`);
+        await driver.get(new URL(path, baseURL).href);
+        await waitFor(driver, '.force-left-full-width');
+        
+        // Select the specific date
+        const dateSelected = await selectDate(driver, dateInfo.value);
+        if (!dateSelected) {
+          console.warn(`Skipping ${hall} for ${dateInfo.text} - could not select date`);
+          continue;
+        }
 
-      const periodToLinks = {};
-      for (const p of PERIODS) {
-        const recs = await collectRecipes(driver, p);
-        periodToLinks[p] = recs;
-        console.log(`  ${p}: ${recs.length} recipes`);
-      }
+        const periodToLinks = {};
+        for (const p of PERIODS) {
+          const recs = await collectRecipes(driver, p);
+          periodToLinks[p] = recs;
+          console.log(`  ${p}: ${recs.length} recipes`);
+        }
 
-      for (const [period, recs] of Object.entries(periodToLinks)) {
-        for (const { url, station } of recs) {
-          try {
-            await driver.get(url);
-            await driver.sleep(800);
-
-            const name = await (await waitFor(driver, 'h2.single-name', 30_000)).getText();
-            const nutrition = await parseNutrition(driver);
-            const { ingredients, allergens }  = await parseIngredientsAndAllergens(driver);
-            const tags = await parseMetadataTags(driver);
-
-            results.push({
-              dining_hall: hall,
-              meal_period: period,
-              station,
-              url,
-              name,
-              ingredients,
-              allergens,
-              nutrition,
-              tags
-            });
-          } catch (err) {
-            console.warn(`skipped (${err.name})  ${url}`);
-          } finally {
+        for (const [period, recs] of Object.entries(periodToLinks)) {
+          for (const { url, station } of recs) {
             try {
-              await driver.navigate().back();
-              await waitFor(driver, '.force-left-full-width', 10_000);
-            } catch { /* ignore */ }
+              await driver.get(url);
+              await driver.sleep(800);
+
+              const name = await (await waitFor(driver, 'h2.single-name', 30_000)).getText();
+              const nutrition = await parseNutrition(driver);
+              const { ingredients, allergens }  = await parseIngredientsAndAllergens(driver);
+              const tags = await parseMetadataTags(driver);
+
+              results.push({
+                date: dateInfo.value || new Date().toISOString().split('T')[0], // Use current date if no value
+                date_text: dateInfo.text,
+                dining_hall: hall,
+                meal_period: period,
+                station,
+                url,
+                name,
+                ingredients,
+                allergens,
+                nutrition,
+                tags
+              });
+            } catch (err) {
+              console.warn(`skipped (${err.name})  ${url}`);
+            } finally {
+              try {
+                await driver.navigate().back();
+                await waitFor(driver, '.force-left-full-width', 10_000);
+              } catch { /* ignore */ }
+            }
           }
         }
       }
@@ -192,5 +250,5 @@ const PERIODS = ['breakfast', 'lunch', 'dinner'];
   }
 
   fs.writeFileSync('results.json', JSON.stringify(results, null, 2), 'utf8');
-  console.log(`\nDone! Scraped ${results.length} recipes total → results.json`);
+  console.log(`\nDone! Scraped ${results.length} recipes total across ${availableDates.length} dates → results.json`);
 })();
