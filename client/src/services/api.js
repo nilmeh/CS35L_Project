@@ -48,7 +48,11 @@ export const apiService = {
     getAvailableDates: async () => {
       const response = await api.get('/menu');
       const items = response.data;
-      const dates = [...new Set(items.map(item => item.date))].sort();
+      const dates = [...new Set(items.map(item => {
+        // Extract just the date part (YYYY-MM-DD) to avoid timezone issues
+        const date = new Date(item.date);
+        return date.toISOString().split('T')[0];
+      }))].sort();
       return dates;
     },
   },

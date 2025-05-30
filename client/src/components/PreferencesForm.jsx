@@ -71,7 +71,15 @@ function PreferencesForm({ onSubmit, isLoading = false }) {
   };
 
   const formatDate = (dateString) => {
-    const date = new Date(dateString);
+    // Handle YYYY-MM-DD format to avoid timezone issues
+    if (dateString.includes('T')) {
+      // If it's an ISO string, extract date part first
+      dateString = dateString.split('T')[0];
+    }
+    
+    const [year, month, day] = dateString.split('-');
+    const date = new Date(year, month - 1, day); // month is 0-indexed
+    
     return date.toLocaleDateString('en-US', { 
       weekday: 'long',
       year: 'numeric', 
@@ -81,9 +89,17 @@ function PreferencesForm({ onSubmit, isLoading = false }) {
   };
 
   const isToday = (dateString) => {
+    // Handle YYYY-MM-DD format to avoid timezone issues
+    if (dateString.includes('T')) {
+      dateString = dateString.split('T')[0];
+    }
+    
     const today = new Date();
-    const date = new Date(dateString);
-    return today.toDateString() === date.toDateString();
+    const todayString = today.getFullYear() + '-' + 
+                       String(today.getMonth() + 1).padStart(2, '0') + '-' + 
+                       String(today.getDate()).padStart(2, '0');
+    
+    return todayString === dateString;
   };
 
   const validateForm = () => {
