@@ -28,6 +28,7 @@ function transformRawData(raw) {
     for (const [dining_hall, entries] of Object.entries(halls)) {
       for (const entry of entries) {
         const item = {
+          date: new Date(entry.date),
           dining_hall,
           meal_period,
           name: entry.name || '',
