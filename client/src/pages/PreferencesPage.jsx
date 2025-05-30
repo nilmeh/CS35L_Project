@@ -1,11 +1,13 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../components/AuthProvider';
 import PreferencesForm from '../components/PreferencesForm';
 import MealPlanResults from '../components/MealPlanResults';
 import { apiService, handleApiError } from '../services/api';
 import './PreferencesPage.css';
 
 function PreferencesPage() {
+  const { user } = useAuth();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [mealPlans, setMealPlans] = useState([]); // Array to store multiple meal plans
@@ -94,10 +96,9 @@ function PreferencesPage() {
   
   const handleSavePlan = async (plan) => {
     try {
-      // For now, just show a success message
-      // Later this can be integrated with user authentication
+      // Use user.uid or user.email if needed for saving
       alert('Meal plan saved! (This feature will be fully implemented with user accounts)');
-      console.log('Saving meal plan:', plan);
+      console.log('Saving meal plan for user:', user?.email, plan);
     } catch (error) {
       console.error('Error saving meal plan:', error);
       alert('Error saving meal plan. Please try again.');
@@ -210,4 +211,4 @@ function PreferencesPage() {
   );
 }
 
-export default PreferencesPage; 
+export default PreferencesPage;
