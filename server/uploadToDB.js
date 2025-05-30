@@ -12,12 +12,10 @@ const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/ucla-meal-
 function transformRawData(raw) {
   const items = [];
 
-  // Parse nutrition values from strings like "6.5g" to numbers
   const parseNutrition = (value) => {
     if (!value) return 0;
     if (typeof value === 'number') return value;
     if (typeof value === 'string') {
-      // Remove 'g' and any other non-numeric characters, then parse
       const cleaned = value.replace(/[^0-9.\-]/g, '');
       return parseFloat(cleaned) || 0;
     }
@@ -28,7 +26,7 @@ function transformRawData(raw) {
     for (const [dining_hall, entries] of Object.entries(halls)) {
       for (const entry of entries) {
         const item = {
-          date: new Date(entry.date),
+          date: entry.date || new Date().toISOString().split('T')[0],
           dining_hall,
           meal_period,
           name: entry.name || '',
@@ -49,6 +47,7 @@ function transformRawData(raw) {
     }
   }
 
+  console.log(`Total items processed: ${items.length}`);
   return items;
 }
 
@@ -66,12 +65,6 @@ async function upload() {
     // Transform data
     const docs = transformRawData(rawData);
     console.log(`Transformed ${docs.length} items for upload.`);
-
-    // Show sample of first transformed item
-    if (docs.length > 0) {
-      console.log('Sample transformed item:');
-      console.log(JSON.stringify(docs[0], null, 2));
-    }
 
     // Clear and insert
     await MenuItem.deleteMany({});
