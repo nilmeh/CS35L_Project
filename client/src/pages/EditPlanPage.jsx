@@ -1,282 +1,635 @@
-import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import { useAuth } from '../components/AuthProvider';
+import { apiService, handleApiError } from '../services/api';
 import './EditPlanPage.css';
+
+// Dining halls configuration
+const DINING_HALLS = [
+  'De Neve',
+  'Epicuria', 
+  'Bruin Plate',
+  'FEAST at Rieber'
+];
+
+const MEAL_PERIODS = ['breakfast', 'lunch', 'dinner'];
 
 function EditPlanPage() {
   const navigate = useNavigate();
-  const [loading, setLoading] = useState(true);
+  const { id } = useParams();
+  const [searchParams] = useSearchParams();
+  const { user } = useAuth();
+  
+  // Create mode vs Edit mode
+  const isCreateMode = !id;
+  const initialData = searchParams.get('data');
+  
+  // Core state
+  const [loading, setLoading] = useState(!isCreateMode);
   const [saving, setSaving] = useState(false);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [searchResults, setSearchResults] = useState([]);
+  const [error, setError] = useState(null);
+  
+  // Meal plan state
   const [mealPlan, setMealPlan] = useState({
-    id: 'mp-123456',
-    name: 'My Lunch Plan',
-    diningHall: 'De Neve',
+    name: '',
+    date: new Date().toISOString().split('T')[0],
     mealTime: 'lunch',
+    diningHall: '',
     items: []
   });
   
-  // Load meal plan data
+  // Search and editing state
+  const [searchTerm, setSearchTerm] = useState('');
+  const [searchResults, setSearchResults] = useState([]);
+  const [searching, setSearching] = useState(false);
+  const [searchFilters, setSearchFilters] = useState({
+    diningHall: '',
+    category: '',
+    vegetarian: false,
+    vegan: false
+  });
+  
+  // Drag and drop state
+  const [draggedItem, setDraggedItem] = useState(null);
+  const [dragOver, setDragOver] = useState(null);
+  
+  // Available dates for meal planning
+  const [availableDates, setAvailableDates] = useState([]);
+
+  // Load available dates
   useEffect(() => {
-    setTimeout(() => {
-      // Replace later
-      setMealPlan({
-        id: 'mp-123456',
-        name: 'My Lunch Plan',
-        diningHall: 'De Neve',
-        mealTime: 'lunch',
-        items: [
-          { id: 1, name: 'Grilled Chicken Breast', servings: 2, calories: 300, protein: 50, fat: 10, sugar: 0 },
-          { id: 2, name: 'Steamed Broccoli', servings: 1, calories: 55, protein: 3, fat: 0, sugar: 2 },
-          { id: 3, name: 'Brown Rice', servings: 1, calories: 215, protein: 5, fat: 2, sugar: 0 },
-          { id: 4, name: 'Greek Yogurt', servings: 1, calories: 130, protein: 12, fat: 4, sugar: 6 }
-        ]
-      });
-      setLoading(false);
-    }, 1000);
-  }, []);
-  
-  // Calculate nutritional totals
-  const calculateTotals = () => {
-    return mealPlan.items.reduce((acc, item) => {
-      acc.calories += item.calories * item.servings;
-      acc.protein += item.protein * item.servings;
-      acc.fat += item.fat * item.servings;
-      acc.sugar += item.sugar * item.servings;
-      return acc;
-    }, { calories: 0, protein: 0, fat: 0, sugar: 0 });
-  };
-  
-  const handleSearch = (e) => {
-    e.preventDefault();
-    
-    if (searchTerm.trim() === '') return;
-    
-    // Replace later
-    setTimeout(() => {
-      // Mock results
-      const results = [
-        { id: 5, name: 'Grilled Salmon', calories: 180, protein: 22, fat: 8, sugar: 0 },
-        { id: 6, name: 'Garden Salad', calories: 70, protein: 2, fat: 1, sugar: 3 },
-        { id: 7, name: 'Quinoa', calories: 120, protein: 4, fat: 2, sugar: 1 },
-        { id: 8, name: 'Fruit Cup', calories: 80, protein: 1, fat: 0, sugar: 18 }
-      ];
-      
-      setSearchResults(results);
-    }, 500);
-  };
-  
-  const handleAddItem = (item) => {
-    const existingItemIndex = mealPlan.items.findIndex(i => i.id === item.id);
-    
-    if (existingItemIndex >= 0) {
-      const updatedItems = [...mealPlan.items];
-      updatedItems[existingItemIndex].servings += 1;
-      setMealPlan({ ...mealPlan, items: updatedItems });
-    } else {
-      setMealPlan({
-        ...mealPlan,
-        items: [...mealPlan.items, { ...item, servings: 1 }]
-      });
-    }
-    
-    setSearchResults([]);
-    setSearchTerm('');
-  };
-  
-  const handleRemoveItem = (itemId) => {
-    setMealPlan({
-      ...mealPlan,
-      items: mealPlan.items.filter(item => item.id !== itemId)
-    });
-  };
-  
-  const handleChangeServings = (itemId, change) => {
-    const updatedItems = mealPlan.items.map(item => {
-      if (item.id === itemId) {
-        const newServings = Math.max(1, item.servings + change);
-        return { ...item, servings: newServings };
+    const loadAvailableDates = async () => {
+      try {
+        const dates = await apiService.menu.getAvailableDates();
+        setAvailableDates(dates);
+      } catch (error) {
+        console.error('Error loading available dates:', error);
       }
-      return item;
+    };
+    loadAvailableDates();
+  }, []);
+
+  // Load meal plan if editing
+  useEffect(() => {
+    if (isCreateMode) {
+      setLoading(false);
+      
+      // Initialize with data from URL params if creating from generated plan
+      if (initialData) {
+        try {
+          const parsedData = JSON.parse(decodeURIComponent(initialData));
+          setMealPlan(prev => ({
+            ...prev,
+            ...parsedData,
+            name: parsedData.name || `${parsedData.mealTime || 'Meal'} Plan`
+          }));
+        } catch (error) {
+          console.error('Error parsing initial data:', error);
+        }
+      }
+      return;
+    }
+
+    const loadMealPlan = async () => {
+      try {
+        setLoading(true);
+        const plan = await apiService.mealPlans.getById(id);
+        setMealPlan({
+          name: plan.name,
+          date: plan.date.split('T')[0], // Convert to YYYY-MM-DD format
+          mealTime: plan.mealTime,
+          diningHall: plan.diningHall || '',
+          items: plan.items || []
+        });
+      } catch (error) {
+        console.error('Error loading meal plan:', error);
+        setError('Failed to load meal plan');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (user) {
+      loadMealPlan();
+    }
+  }, [id, isCreateMode, initialData, user]);
+
+  // Search menu items
+  const searchMenuItems = useCallback(async () => {
+    if (!searchTerm.trim()) {
+      setSearchResults([]);
+      return;
+    }
+
+    setSearching(true);
+    try {
+      const params = {
+        search: searchTerm,
+        date: mealPlan.date,
+        ...searchFilters,
+        limit: 20
+      };
+      
+      // Remove empty filters
+      Object.keys(params).forEach(key => {
+        if (!params[key] && params[key] !== false) {
+          delete params[key];
+        }
+      });
+
+      const results = await apiService.mealPlans.searchMenuItems(params);
+      setSearchResults(results.items || []);
+    } catch (error) {
+      console.error('Error searching menu items:', error);
+      setSearchResults([]);
+    } finally {
+      setSearching(false);
+    }
+  }, [searchTerm, mealPlan.date, searchFilters]);
+
+  // Debounced search
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      searchMenuItems();
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [searchMenuItems]);
+
+  // Calculate nutritional totals
+  const nutritionTotals = useMemo(() => {
+    return mealPlan.items.reduce((acc, item) => {
+      const servings = item.servings || 1;
+      acc.calories += (item.calories || 0) * servings;
+      acc.protein += (item.protein || 0) * servings;
+      acc.sugar += (item.sugar || 0) * servings;
+      acc.fat += (item.fat || 0) * servings;
+      acc.carbs += (item.carbs || 0) * servings;
+      acc.fiber += (item.fiber || 0) * servings;
+      acc.sodium += (item.sodium || 0) * servings;
+      return acc;
+    }, {
+      calories: 0,
+      protein: 0,
+      sugar: 0,
+      fat: 0,
+      carbs: 0,
+      fiber: 0,
+      sodium: 0
     });
-    
-    setMealPlan({ ...mealPlan, items: updatedItems });
+  }, [mealPlan.items]);
+
+  // Add item to meal plan
+  const addItemToPlan = (item) => {
+    const existingItemIndex = mealPlan.items.findIndex(
+      planItem => planItem.name === item.name && planItem.dining_hall === item.dining_hall
+    );
+
+    if (existingItemIndex >= 0) {
+      // Increase servings if item already exists
+      const updatedItems = [...mealPlan.items];
+      updatedItems[existingItemIndex].servings = (updatedItems[existingItemIndex].servings || 1) + 1;
+      setMealPlan(prev => ({ ...prev, items: updatedItems }));
+    } else {
+      // Add new item
+      const newItem = {
+        ...item,
+        servings: 1,
+        carbs: item.carbs || 0,
+        fiber: item.fiber || 0,
+        sodium: item.sodium || 0
+      };
+      setMealPlan(prev => ({ ...prev, items: [...prev.items, newItem] }));
+    }
+
+    // Clear search after adding
+    setSearchTerm('');
+    setSearchResults([]);
   };
-  
-  const handleSavePlan = () => {
+
+  // Remove item from plan
+  const removeItemFromPlan = (index) => {
+    setMealPlan(prev => ({
+      ...prev,
+      items: prev.items.filter((_, i) => i !== index)
+    }));
+  };
+
+  // Update item servings
+  const updateItemServings = (index, change) => {
+    const updatedItems = [...mealPlan.items];
+    const newServings = Math.max(1, (updatedItems[index].servings || 1) + change);
+    updatedItems[index].servings = newServings;
+    setMealPlan(prev => ({ ...prev, items: updatedItems }));
+  };
+
+  // Drag and drop handlers
+  const handleDragStart = (e, item, source, index) => {
+    setDraggedItem({ item, source, index });
+    e.dataTransfer.effectAllowed = 'move';
+  };
+
+  const handleDragOver = (e) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+  };
+
+  const handleDragEnter = (e, target) => {
+    e.preventDefault();
+    setDragOver(target);
+  };
+
+  const handleDragLeave = (e) => {
+    if (!e.currentTarget.contains(e.relatedTarget)) {
+      setDragOver(null);
+    }
+  };
+
+  const handleDrop = (e, target) => {
+    e.preventDefault();
+    setDragOver(null);
+
+    if (!draggedItem) return;
+
+    if (draggedItem.source === 'search' && target === 'plan') {
+      addItemToPlan(draggedItem.item);
+    } else if (draggedItem.source === 'plan' && target === 'remove') {
+      removeItemFromPlan(draggedItem.index);
+    }
+
+    setDraggedItem(null);
+  };
+
+  // Save meal plan
+  const handleSavePlan = async () => {
+    if (!user) {
+      setError('Please log in to save meal plans');
+      return;
+    }
+
+    if (!mealPlan.name.trim()) {
+      setError('Please enter a name for your meal plan');
+      return;
+    }
+
+    if (mealPlan.items.length === 0) {
+      setError('Please add at least one item to your meal plan');
+      return;
+    }
+
     setSaving(true);
-    
-    // Replace later
-    setTimeout(() => {
+    setError(null);
+
+    try {
+      const planData = {
+        ...mealPlan,
+        preferences: {
+          targetCalories: nutritionTotals.calories,
+          minProtein: nutritionTotals.protein,
+          diningHall: mealPlan.diningHall,
+          mealTime: mealPlan.mealTime
+        },
+        isGenerated: false,
+        isCustomized: true
+      };
+
+      if (isCreateMode) {
+        await apiService.mealPlans.create(planData);
+      } else {
+        await apiService.mealPlans.update(id, planData);
+      }
+
+      navigate('/dashboard');
+    } catch (error) {
+      console.error('Error saving meal plan:', error);
+      setError(error.message || 'Failed to save meal plan');
+    } finally {
       setSaving(false);
-      navigate('/');
-    }, 1000);
+    }
   };
-  
+
   if (loading) {
     return (
       <div className="edit-plan-page">
-        <div className="edit-plan-loading">
+        <div className="loading-container">
+          <div className="loading-spinner"></div>
           <p>Loading meal plan...</p>
         </div>
       </div>
     );
   }
-  
-  const totals = calculateTotals();
-  
+
   return (
     <div className="edit-plan-page">
       <div className="edit-plan-header">
-        <h2>Edit Your Meal Plan</h2>
-        <p>Make manual adjustments to your meal selections</p>
+        <div className="header-content">
+          <h1>{isCreateMode ? 'Create New Meal Plan' : 'Edit Meal Plan'}</h1>
+          <p>Drag and drop items to customize your perfect meal</p>
+        </div>
+        
+        <div className="header-actions">
+          <button 
+            className="save-button"
+            onClick={handleSavePlan}
+            disabled={saving || mealPlan.items.length === 0}
+          >
+            {saving ? '⏳ Saving...' : '💾 Save Plan'}
+          </button>
+          <button 
+            className="cancel-button"
+            onClick={() => navigate('/dashboard')}
+          >
+            Cancel
+          </button>
+        </div>
       </div>
-      
+
+      {error && (
+        <div className="error-alert">
+          <span className="error-icon">❌</span>
+          <span>{error}</span>
+          <button onClick={() => setError(null)}>✕</button>
+        </div>
+      )}
+
       <div className="edit-plan-content">
-        <div className="edit-plan-details">
-          <div className="plan-info">
-            <div className="plan-name">
-              <label htmlFor="plan-name">Plan Name</label>
-              <input 
-                type="text" 
-                id="plan-name" 
-                value={mealPlan.name} 
-                onChange={(e) => setMealPlan({ ...mealPlan, name: e.target.value })} 
-              />
-            </div>
+        {/* Meal Plan Configuration */}
+        <div className="plan-config-section">
+          <div className="config-card">
+            <h3>📋 Plan Details</h3>
             
-            <div className="plan-meta">
-              <div className="meta-item">
-                <label htmlFor="dining-hall">Dining Hall</label>
+            <div className="form-row">
+              <div className="form-group">
+                <label htmlFor="plan-name">Plan Name</label>
+                <input 
+                  type="text" 
+                  id="plan-name" 
+                  value={mealPlan.name}
+                  onChange={(e) => setMealPlan(prev => ({ ...prev, name: e.target.value }))}
+                  placeholder="Enter plan name"
+                />
+              </div>
+            </div>
+
+            <div className="form-row">
+              <div className="form-group">
+                <label htmlFor="date">Date</label>
                 <select 
-                  id="dining-hall" 
-                  value={mealPlan.diningHall} 
-                  onChange={(e) => setMealPlan({ ...mealPlan, diningHall: e.target.value })}
+                  id="date" 
+                  value={mealPlan.date}
+                  onChange={(e) => setMealPlan(prev => ({ ...prev, date: e.target.value }))}
                 >
-                  <option value="De Neve">De Neve</option>
-                  <option value="Epicuria">Epicuria</option>
-                  <option value="Bruin Plate">Bruin Plate</option>
-                  <option value="FEAST at Rieber">FEAST</option>
+                  {availableDates.map(date => (
+                    <option key={date} value={date}>
+                      {new Date(date).toLocaleDateString('en-US', { 
+                        weekday: 'short', 
+                        month: 'short', 
+                        day: 'numeric' 
+                      })}
+                    </option>
+                  ))}
                 </select>
               </div>
-              
-              <div className="meta-item">
+
+              <div className="form-group">
                 <label htmlFor="meal-time">Meal Time</label>
                 <select 
                   id="meal-time" 
-                  value={mealPlan.mealTime} 
-                  onChange={(e) => setMealPlan({ ...mealPlan, mealTime: e.target.value })}
+                  value={mealPlan.mealTime}
+                  onChange={(e) => setMealPlan(prev => ({ ...prev, mealTime: e.target.value }))}
                 >
-                  <option value="breakfast">Breakfast</option>
-                  <option value="lunch">Lunch</option>
-                  <option value="dinner">Dinner</option>
+                  {MEAL_PERIODS.map(period => (
+                    <option key={period} value={period}>
+                      {period.charAt(0).toUpperCase() + period.slice(1)}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="dining-hall">Dining Hall</label>
+                <select 
+                  id="dining-hall" 
+                  value={mealPlan.diningHall}
+                  onChange={(e) => setMealPlan(prev => ({ ...prev, diningHall: e.target.value }))}
+                >
+                  <option value="">Any dining hall</option>
+                  {DINING_HALLS.map(hall => (
+                    <option key={hall} value={hall}>{hall}</option>
+                  ))}
                 </select>
               </div>
             </div>
           </div>
-          
-          <div className="nutrition-summary">
-            <h3>Nutritional Summary</h3>
-            <div className="nutrition-values">
+
+          {/* Nutrition Summary */}
+          <div className="nutrition-card">
+            <h3>📊 Nutrition Summary</h3>
+            <div className="nutrition-grid">
               <div className="nutrition-item">
                 <span className="nutrition-label">Calories</span>
-                <span className="nutrition-value">{totals.calories}</span>
+                <span className="nutrition-value">{Math.round(nutritionTotals.calories)}</span>
               </div>
               <div className="nutrition-item">
                 <span className="nutrition-label">Protein</span>
-                <span className="nutrition-value">{totals.protein}g</span>
-              </div>
-              <div className="nutrition-item">
-                <span className="nutrition-label">Fat</span>
-                <span className="nutrition-value">{totals.fat}g</span>
+                <span className="nutrition-value">{Math.round(nutritionTotals.protein)}g</span>
               </div>
               <div className="nutrition-item">
                 <span className="nutrition-label">Sugar</span>
-                <span className="nutrition-value">{totals.sugar}g</span>
+                <span className="nutrition-value">{Math.round(nutritionTotals.sugar)}g</span>
+              </div>
+              <div className="nutrition-item">
+                <span className="nutrition-label">Fat</span>
+                <span className="nutrition-value">{Math.round(nutritionTotals.fat)}g</span>
               </div>
             </div>
           </div>
-          
-          <div className="meal-items">
-            <h3>Meal Items</h3>
-            {mealPlan.items.length === 0 ? (
-              <p className="empty-items">No items added yet. Add items using the search below.</p>
-            ) : (
-              <ul className="items-list">
-                {mealPlan.items.map(item => (
-                  <li key={item.id} className="item">
-                    <div className="item-info">
-                      <span className="item-name">{item.name}</span>
-                      <span className="item-nutrition">
-                        {item.calories * item.servings} cal • {item.protein * item.servings}g protein
-                      </span>
-                    </div>
-                    
-                    <div className="item-actions">
-                      <div className="servings-control">
-                        <button onClick={() => handleChangeServings(item.id, -1)}>-</button>
-                        <span>{item.servings}</span>
-                        <button onClick={() => handleChangeServings(item.id, 1)}>+</button>
+        </div>
+
+        <div className="edit-main-content">
+          {/* Current Meal Plan */}
+          <div className="current-plan-section">
+            <div className="section-header">
+              <h3>🍽️ Your Meal Plan</h3>
+              <span className="item-count">{mealPlan.items.length} items</span>
+            </div>
+
+            <div 
+              className={`meal-plan-drop-zone ${dragOver === 'plan' ? 'drag-over' : ''}`}
+              onDragOver={handleDragOver}
+              onDragEnter={(e) => handleDragEnter(e, 'plan')}
+              onDragLeave={handleDragLeave}
+              onDrop={(e) => handleDrop(e, 'plan')}
+            >
+              {mealPlan.items.length === 0 ? (
+                <div className="empty-plan">
+                  <div className="empty-icon">🍽️</div>
+                  <p>Your meal plan is empty</p>
+                  <span>Drag items here or use the search below</span>
+                </div>
+              ) : (
+                <div className="plan-items-list">
+                  {mealPlan.items.map((item, index) => (
+                    <div 
+                      key={index} 
+                      className="plan-item-card"
+                      draggable
+                      onDragStart={(e) => handleDragStart(e, item, 'plan', index)}
+                    >
+                      <div className="item-info">
+                        <h4 className="item-name">{item.name}</h4>
+                        <div className="item-location">
+                          <span>{item.dining_hall}</span>
+                          {item.station && <span> • {item.station}</span>}
+                        </div>
+                        <div className="item-nutrition">
+                          {Math.round(item.calories * (item.servings || 1))} cal • 
+                          {Math.round(item.protein * (item.servings || 1))}g protein
+                        </div>
                       </div>
-                      <button 
-                        className="remove-button" 
-                        onClick={() => handleRemoveItem(item.id)}
-                      >
-                        Remove
+
+                      <div className="item-controls">
+                        <div className="servings-control">
+                          <button 
+                            onClick={() => updateItemServings(index, -1)}
+                            disabled={(item.servings || 1) <= 1}
+                          >
+                            −
+                          </button>
+                          <span>{item.servings || 1}</span>
+                          <button onClick={() => updateItemServings(index, 1)}>+</button>
+                        </div>
+                        
+                        <button 
+                          className="remove-button"
+                          onClick={() => removeItemFromPlan(index)}
+                        >
+                          🗑️
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Remove Drop Zone */}
+            <div 
+              className={`remove-drop-zone ${dragOver === 'remove' ? 'drag-over' : ''}`}
+              onDragOver={handleDragOver}
+              onDragEnter={(e) => handleDragEnter(e, 'remove')}
+              onDragLeave={handleDragLeave}
+              onDrop={(e) => handleDrop(e, 'remove')}
+            >
+              <span className="remove-icon">🗑️</span>
+              <span>Drop here to remove</span>
+            </div>
+          </div>
+
+          {/* Search and Add Items */}
+          <div className="search-section">
+            <div className="section-header">
+              <h3>🔍 Add Items</h3>
+            </div>
+
+            {/* Search Filters */}
+            <div className="search-filters">
+              <div className="filter-row">
+                <select 
+                  value={searchFilters.diningHall}
+                  onChange={(e) => setSearchFilters(prev => ({ ...prev, diningHall: e.target.value }))}
+                >
+                  <option value="">All dining halls</option>
+                  {DINING_HALLS.map(hall => (
+                    <option key={hall} value={hall}>{hall}</option>
+                  ))}
+                </select>
+
+                <select 
+                  value={searchFilters.category}
+                  onChange={(e) => setSearchFilters(prev => ({ ...prev, category: e.target.value }))}
+                >
+                  <option value="">All categories</option>
+                  <option value="Main Course">Main Course</option>
+                  <option value="Side">Side</option>
+                  <option value="Soup">Soup</option>
+                  <option value="Salad">Salad</option>
+                  <option value="Dessert">Dessert</option>
+                  <option value="Beverage">Beverage</option>
+                </select>
+
+                <label className="checkbox-label">
+                  <input 
+                    type="checkbox"
+                    checked={searchFilters.vegetarian}
+                    onChange={(e) => setSearchFilters(prev => ({ ...prev, vegetarian: e.target.checked }))}
+                  />
+                  Vegetarian
+                </label>
+
+                <label className="checkbox-label">
+                  <input 
+                    type="checkbox"
+                    checked={searchFilters.vegan}
+                    onChange={(e) => setSearchFilters(prev => ({ ...prev, vegan: e.target.checked }))}
+                  />
+                  Vegan
+                </label>
+              </div>
+            </div>
+
+            {/* Search Input */}
+            <div className="search-input-container">
+              <input
+                type="text"
+                className="search-input"
+                placeholder="Search for food items..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+              {searching && <div className="search-spinner">⏳</div>}
+            </div>
+
+            {/* Search Results */}
+            <div className="search-results">
+              {searchResults.length > 0 ? (
+                <div className="results-list">
+                  {searchResults.map((item, index) => (
+                    <div 
+                      key={index} 
+                      className="search-result-item"
+                      draggable
+                      onDragStart={(e) => handleDragStart(e, item, 'search', index)}
+                      onClick={() => addItemToPlan(item)}
+                    >
+                      <div className="result-info">
+                        <h4 className="result-name">{item.name}</h4>
+                        <div className="result-location">
+                          <span>{item.dining_hall}</span>
+                          {item.station && <span> • {item.station}</span>}
+                        </div>
+                        <div className="result-nutrition">
+                          {Math.round(item.calories)} cal • {Math.round(item.protein)}g protein
+                        </div>
+                      </div>
+                      
+                      <button className="add-button">
+                        <span>+</span>
                       </button>
                     </div>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
-        </div>
-        
-        <div className="edit-plan-search">
-          <h3>Add Items</h3>
-          <form onSubmit={handleSearch} className="search-form">
-            <input
-              type="text"
-              placeholder="Search for food items..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-            <button type="submit">Search</button>
-          </form>
-          
-          {searchResults.length > 0 && (
-            <div className="search-results">
-              <h4>Search Results</h4>
-              <ul>
-                {searchResults.map(item => (
-                  <li key={item.id} className="result-item">
-                    <div className="result-info">
-                      <span className="result-name">{item.name}</span>
-                      <span className="result-nutrition">
-                        {item.calories} cal • {item.protein}g protein
-                      </span>
-                    </div>
-                    <button onClick={() => handleAddItem(item)}>Add</button>
-                  </li>
-                ))}
-              </ul>
+                  ))}
+                </div>
+              ) : searchTerm && !searching ? (
+                <div className="no-results">
+                  <p>No items found for "{searchTerm}"</p>
+                  <span>Try adjusting your search or filters</span>
+                </div>
+              ) : (
+                <div className="search-prompt">
+                  <p>Search for food items to add to your meal plan</p>
+                </div>
+              )}
             </div>
-          )}
-          
-          <div className="actions">
-            <button 
-              className="save-button" 
-              onClick={handleSavePlan}
-              disabled={saving}
-            >
-              {saving ? 'Saving...' : 'Save Meal Plan'}
-            </button>
-            <button 
-              className="cancel-button"
-              onClick={() => navigate('/')}
-            >
-              Cancel
-            </button>
           </div>
         </div>
       </div>

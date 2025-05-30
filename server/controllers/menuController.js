@@ -81,17 +81,60 @@ export const getMenuItemById = async (req, res) => {
   }
 };
 
+export const getMenuByDate = async (req, res) => {
+  try {
+    const { date } = req.params;
+    const { dining_hall } = req.query;
+    
+    // Parse the date and create a range for the entire day
+    const startDate = new Date(date);
+    const endDate = new Date(date);
+    endDate.setDate(endDate.getDate() + 1);
+    
+    const filter = {
+      date: {
+        $gte: startDate,
+        $lt: endDate
+      }
+    };
+    
+    if (dining_hall) {
+      filter.dining_hall = dining_hall;
+    }
+    
+    const menuItems = await MenuItem.find(filter);
+    
+    res.status(200).json({
+      date,
+      dining_hall: dining_hall || 'all',
+      count: menuItems.length,
+      items: menuItems
+    });
+  } catch (error) {
+    console.error('Error fetching menu by date:', error);
+    res.status(500).json({ message: 'Error fetching menu', error: error.message });
+  }
+};
+
 export const searchMenuItems = async (req, res) => {
   try {
-    const { query, dining_hall, meal_period, date } = req.query;
+    const { 
+      search, 
+      date, 
+      dining_hall, 
+      category, 
+      vegetarian, 
+      vegan, 
+      meal_period,
+      limit = 20, 
+      skip = 0 
+    } = req.query;
     
+    // Build search filter
     const filter = {};
-    if (dining_hall) filter.dining_hall = dining_hall;
-    if (meal_period) filter.meal_period = meal_period;
     
-    // Add date filtering if provided
+    // Date filter
     if (date) {
-      // Parse the date and create a range for the entire day
       const startDate = new Date(date);
       const endDate = new Date(date);
       endDate.setDate(endDate.getDate() + 1);
@@ -102,18 +145,67 @@ export const searchMenuItems = async (req, res) => {
       };
     }
     
-    if (query) {
+    // Text search filter
+    if (search && search.trim()) {
       filter.$or = [
-        { name: { $regex: query, $options: 'i' } },
-        { station: { $regex: query, $options: 'i' } },
-        { tags: { $in: [new RegExp(query, 'i')] } }
+        { name: { $regex: search.trim(), $options: 'i' } },
+        { description: { $regex: search.trim(), $options: 'i' } }
       ];
     }
-
-    const menuItems = await MenuItem.find(filter);
-    res.status(200).json(menuItems);
+    
+    // Dining hall filter
+    if (dining_hall && dining_hall !== '') {
+      filter.dining_hall = dining_hall;
+    }
+    
+    // Category filter
+    if (category && category !== '') {
+      filter.category = category;
+    }
+    
+    // Meal period filter
+    if (meal_period && meal_period !== '') {
+      filter.meal_period = meal_period;
+    }
+    
+    // Vegetarian filter
+    if (vegetarian === 'true') {
+      filter.vegetarian = true;
+    }
+    
+    // Vegan filter
+    if (vegan === 'true') {
+      filter.vegan = true;
+    }
+    
+    // Execute search
+    const items = await MenuItem.find(filter)
+      .limit(parseInt(limit))
+      .skip(parseInt(skip))
+      .sort({ name: 1 });
+    
+    const total = await MenuItem.countDocuments(filter);
+    
+    res.status(200).json({
+      query: {
+        search: search || '',
+        date: date || '',
+        dining_hall: dining_hall || '',
+        category: category || '',
+        vegetarian: vegetarian === 'true',
+        vegan: vegan === 'true',
+        meal_period: meal_period || ''
+      },
+      results: {
+        total,
+        limit: parseInt(limit),
+        skip: parseInt(skip),
+        count: items.length
+      },
+      items
+    });
   } catch (error) {
-    console.error("Search failed:", error);
-    res.status(500).json({ message: "Search failed", error: error.message });
+    console.error('Error searching menu items:', error);
+    res.status(500).json({ message: 'Error searching menu items', error: error.message });
   }
 };

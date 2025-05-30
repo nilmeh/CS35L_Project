@@ -243,6 +243,12 @@ function containsAnimalProducts(ingredientsText) {
  * @returns {Array} Enhanced menu data with additional tags
  */
 function enhanceMenuData(menuData) {
+  // Safety check: return empty array if menuData is undefined or null
+  if (!menuData || !Array.isArray(menuData)) {
+    console.warn('⚠️ enhanceMenuData: menuData is not a valid array:', menuData);
+    return [];
+  }
+  
   return menuData.map(item => {
     // Convert Mongoose document to plain object
     const plainItem = item.toObject ? item.toObject() : item;

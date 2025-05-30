@@ -22,7 +22,7 @@ function PreferencesForm({ onSubmit, isLoading = false }) {
     date: ""
   });
 
-  // Separate state for the raw input strings
+
   const [tagInputs, setTagInputs] = useState({
     allowedTags: '',
     disallowedTags: '',
@@ -188,13 +188,11 @@ function PreferencesForm({ onSubmit, isLoading = false }) {
       return;
     }
     
-    // Final processing of tag inputs to ensure they're properly parsed
     const finalAllowedTags = tagInputs.allowedTags.split(',').map(tag => tag.trim()).filter(Boolean);
     const finalDisallowedTags = tagInputs.disallowedTags.split(',').map(tag => tag.trim()).filter(Boolean);
     const finalLikedFoods = tagInputs.likedFoods.split(',').map(tag => tag.trim()).filter(Boolean);
     const finalDislikedFoods = tagInputs.dislikedFoods.split(',').map(tag => tag.trim()).filter(Boolean);
     
-    // Convert empty strings to undefined for optional fields
     const submitData = {
       ...preferences,
       allowedTags: finalAllowedTags,
@@ -204,18 +202,6 @@ function PreferencesForm({ onSubmit, isLoading = false }) {
       maxSugar: preferences.maxSugar === '' ? undefined : preferences.maxSugar,
       maxFat: preferences.maxFat === '' ? undefined : preferences.maxFat,
     };
-    
-    console.log('Submitting meal preferences:', submitData);
-    console.log('Raw tag inputs:', tagInputs);
-    console.log('Processed tags:', { 
-      allowedTags: finalAllowedTags, 
-      disallowedTags: finalDisallowedTags 
-    });
-    console.log('Food preferences:', { 
-      likedFoods: finalLikedFoods, 
-      dislikedFoods: finalDislikedFoods 
-    });
-    console.log('Excluded categories:', preferences.excludedCategories);
     
     onSubmit(submitData);
   };
