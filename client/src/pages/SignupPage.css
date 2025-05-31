@@ -1,35 +1,30 @@
-.signup-page {
+.signup-page, .login-page {
   min-height: 100vh;
-  background: linear-gradient(135deg, var(--primary-light) 0%, #f8f9fa 100%);
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: var(--spacing-md);
+  background: #f7fafd;
 }
 
-.signup-container {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: var(--spacing-xl);
+.signup-container, .login-container {
+  background: #fff;
+  padding: 3.5rem 3.5rem 2.5rem 3.5rem;
+  border-radius: 16px;
+  box-shadow: 0 4px 32px rgba(0,0,0,0.10);
+  max-width: 480px;
   width: 100%;
-  max-width: 1000px;
-}
-
-@media (min-width: 992px) {
-  .signup-container {
-    grid-template-columns: 1fr 1fr;
-    align-items: start;
-  }
-}
-
-.signup-card {
-  background-color: white;
-  border-radius: var(--border-radius-lg);
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
-  padding: var(--spacing-xxl);
-  width: 100%;
-  max-width: 450px;
+  text-align: center;
   margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.signup-card, .login-card {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
 }
 
 .signup-header {
@@ -402,4 +397,11 @@
   .benefit-icon {
     margin-bottom: var(--spacing-sm);
   }
-} 
+}
+
+@media (max-width: 600px) {
+  .signup-container, .login-container {
+    padding: 1.2rem 0.5rem 1.2rem 0.5rem;
+    max-width: 98vw;
+  }
+}
