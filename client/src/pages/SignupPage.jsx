@@ -1,5 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { createUserWithEmailAndPassword, GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
+import { auth } from '../services/firebase';
 import './SignupPage.css';
 
 function SignupPage() {
@@ -23,7 +25,6 @@ function SignupPage() {
       ...prev,
       [name]: type === 'checkbox' ? checked : value
     }));
-    
     if (errors[name]) {
       setErrors(prev => ({
         ...prev,
@@ -60,7 +61,7 @@ function SignupPage() {
     } else if (formData.password.length < 8) {
       newErrors.password = 'Password must be at least 8 characters';
     } else if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(formData.password)) {
-      newErrors.password = 'Password must contain at least one uppercase letter, one lowercase letter, and one number';
+      newErrors.password = 'Password must contain upper, lower, and a number';
     }
 
     if (!formData.confirmPassword) {
@@ -85,24 +86,26 @@ function SignupPage() {
     setLoading(true);
     
     try {
-      // Replace with actual API call or Firebase
-      console.log('Signup attempt:', formData);
-      
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      navigate('/login');
+      await createUserWithEmailAndPassword(auth, formData.email, formData.password);
+      navigate('/preferences');
     } catch (error) {
-      console.error('Signup error:', error);
-      setErrors({ general: 'An error occurred during signup. Please try again.' });
+      setErrors({ general: error.message });
     } finally {
       setLoading(false);
     }
   };
 
-  const handleGoogleSignup = () => {
-    // Pending: Implement Google Authentication with Firebase
-    console.log('Google signup clicked');
+  const handleGoogleSignup = async () => {
+    setLoading(true);
+    try {
+      const provider = new GoogleAuthProvider();
+      await signInWithPopup(auth, provider);
+      navigate('/preferences');
+    } catch (error) {
+      setErrors({ general: error.message });
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -110,17 +113,11 @@ function SignupPage() {
       <div className="signup-container">
         <div className="signup-card">
           <div className="signup-header">
-            <h2>Create Your Account</h2>
-            <p>Join UCLA Dining Meal Planner today</p>
+            <h2>Sign Up</h2>
+            <p>Create your account</p>
           </div>
-
-          <form onSubmit={handleSubmit} className="signup-form">
-            {errors.general && (
-              <div className="error-message general-error">
-                {errors.general}
-              </div>
-            )}
-
+          {errors.general && <div className="general-error">{errors.general}</div>}
+          <form className="signup-form" onSubmit={handleSubmit}>
             <div className="name-row">
               <div className="form-group">
                 <label htmlFor="firstName">First Name</label>
@@ -131,12 +128,11 @@ function SignupPage() {
                   value={formData.firstName}
                   onChange={handleChange}
                   className={errors.firstName ? 'error' : ''}
-                  placeholder="Enter your first name"
                   disabled={loading}
+                  autoComplete="given-name"
                 />
-                {errors.firstName && <span className="error-message">{errors.firstName}</span>}
+                {errors.firstName && <div className="error-message">{errors.firstName}</div>}
               </div>
-
               <div className="form-group">
                 <label htmlFor="lastName">Last Name</label>
                 <input
@@ -146,15 +142,14 @@ function SignupPage() {
                   value={formData.lastName}
                   onChange={handleChange}
                   className={errors.lastName ? 'error' : ''}
-                  placeholder="Enter your last name"
                   disabled={loading}
+                  autoComplete="family-name"
                 />
-                {errors.lastName && <span className="error-message">{errors.lastName}</span>}
+                {errors.lastName && <div className="error-message">{errors.lastName}</div>}
               </div>
             </div>
-
             <div className="form-group">
-              <label htmlFor="email">UCLA Email Address</label>
+              <label htmlFor="email">UCLA Email</label>
               <input
                 type="email"
                 id="email"
@@ -162,12 +157,11 @@ function SignupPage() {
                 value={formData.email}
                 onChange={handleChange}
                 className={errors.email ? 'error' : ''}
-                placeholder="your.name@ucla.edu"
                 disabled={loading}
+                autoComplete="email"
               />
-              {errors.email && <span className="error-message">{errors.email}</span>}
+              {errors.email && <div className="error-message">{errors.email}</div>}
             </div>
-
             <div className="form-group">
               <label htmlFor="password">Password</label>
               <div className="password-input-container">
@@ -178,21 +172,21 @@ function SignupPage() {
                   value={formData.password}
                   onChange={handleChange}
                   className={errors.password ? 'error' : ''}
-                  placeholder="Create a strong password"
                   disabled={loading}
+                  autoComplete="new-password"
                 />
                 <button
                   type="button"
                   className="password-toggle"
-                  onClick={() => setShowPassword(!showPassword)}
+                  onClick={() => setShowPassword((show) => !show)}
                   disabled={loading}
+                  tabIndex={-1}
                 >
-                  {showPassword ? '👁️' : '👁️‍🗨️'}
+                  {showPassword ? 'Hide' : 'Show'}
                 </button>
               </div>
-              {errors.password && <span className="error-message">{errors.password}</span>}
+              {errors.password && <div className="error-message">{errors.password}</div>}
             </div>
-
             <div className="form-group">
               <label htmlFor="confirmPassword">Confirm Password</label>
               <div className="password-input-container">
@@ -203,122 +197,44 @@ function SignupPage() {
                   value={formData.confirmPassword}
                   onChange={handleChange}
                   className={errors.confirmPassword ? 'error' : ''}
-                  placeholder="Confirm your password"
                   disabled={loading}
+                  autoComplete="new-password"
                 />
                 <button
                   type="button"
                   className="password-toggle"
-                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  onClick={() => setShowConfirmPassword((show) => !show)}
                   disabled={loading}
+                  tabIndex={-1}
                 >
-                  {showConfirmPassword ? '👁️' : '👁️‍🗨️'}
+                  {showConfirmPassword ? 'Hide' : 'Show'}
                 </button>
               </div>
-              {errors.confirmPassword && <span className="error-message">{errors.confirmPassword}</span>}
+              {errors.confirmPassword && <div className="error-message">{errors.confirmPassword}</div>}
             </div>
-
-            <div className="form-group">
-              <label className="terms-agreement">
-                <input
-                  type="checkbox"
-                  name="agreedToTerms"
-                  checked={formData.agreedToTerms}
-                  onChange={handleChange}
-                  disabled={loading}
-                />
-                <span>
-                  I agree to the{' '}
-                  <Link to="/terms" target="_blank" className="terms-link">
-                    Terms and Conditions
-                  </Link>{' '}
-                  and{' '}
-                  <Link to="/privacy" target="_blank" className="terms-link">
-                    Privacy Policy
-                  </Link>
-                </span>
+            <div className="form-group terms-agreement">
+              <input
+                type="checkbox"
+                id="agreedToTerms"
+                name="agreedToTerms"
+                checked={formData.agreedToTerms}
+                onChange={handleChange}
+                disabled={loading}
+              />
+              <label htmlFor="agreedToTerms">
+                I agree to the <a href="/terms" className="terms-link" target="_blank" rel="noopener noreferrer">terms and conditions</a>
               </label>
-              {errors.agreedToTerms && <span className="error-message">{errors.agreedToTerms}</span>}
+              {errors.agreedToTerms && <div className="error-message">{errors.agreedToTerms}</div>}
             </div>
-
-            <button 
-              type="submit" 
-              className="signup-button"
-              disabled={loading}
-            >
-              {loading ? (
-                <span className="loading-spinner">
-                  <span className="spinner"></span>
-                  Creating account...
-                </span>
-              ) : (
-                'Create Account'
-              )}
-            </button>
-
-            <div className="divider">
-              <span>or</span>
-            </div>
-
-            <button 
-              type="button" 
-              className="google-signup-button"
-              onClick={handleGoogleSignup}
-              disabled={loading}
-            >
-              <svg className="google-icon" viewBox="0 0 24 24">
-                <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-                <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-                <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
-                <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
-              </svg>
-              Sign up with Google
+            <button type="submit" className="btn btn-primary" disabled={loading}>
+              {loading ? 'Signing up...' : 'Sign Up'}
             </button>
           </form>
-
-          <div className="signup-footer">
-            <p>
-              Already have an account?{' '}
-              <Link to="/login" className="login-link">
-                Sign in here
-              </Link>
-            </p>
-          </div>
-        </div>
-
-        <div className="signup-info">
-          <div className="info-card">
-            <h3>Why Join UCLA Dining?</h3>
-            <div className="benefits-list">
-              <div className="benefit-item">
-                <span className="benefit-icon">🍽️</span>
-                <div>
-                  <h4>Smart Meal Planning</h4>
-                  <p>Get personalized meal recommendations based on your dietary preferences and nutrition goals</p>
-                </div>
-              </div>
-              <div className="benefit-item">
-                <span className="benefit-icon">📊</span>
-                <div>
-                  <h4>Nutrition Tracking</h4>
-                  <p>Monitor your daily intake and stay on track with your health objectives</p>
-                </div>
-              </div>
-              <div className="benefit-item">
-                <span className="benefit-icon">🕒</span>
-                <div>
-                  <h4>Real-time Menus</h4>
-                  <p>Access up-to-date menu information from all UCLA dining halls</p>
-                </div>
-              </div>
-              <div className="benefit-item">
-                <span className="benefit-icon">⚙️</span>
-                <div>
-                  <h4>Custom Preferences</h4>
-                  <p>Set dietary restrictions, allergies, and food preferences for tailored recommendations</p>
-                </div>
-              </div>
-            </div>
+          <button className="btn btn-google" onClick={handleGoogleSignup} disabled={loading} style={{marginTop: '1rem', width: '100%'}}>
+            Sign up with Google
+          </button>
+          <div style={{marginTop: '1rem', textAlign: 'center'}}>
+            Already have an account? <a href="/login">Login</a>
           </div>
         </div>
       </div>
@@ -326,4 +242,4 @@ function SignupPage() {
   );
 }
 
-export default SignupPage; 
+export default SignupPage;

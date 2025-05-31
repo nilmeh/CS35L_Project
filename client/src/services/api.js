@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { auth } from './firebase';
 
 // Base URL for the backend API
 const API_BASE_URL = 'http://localhost:3001/api';
@@ -10,6 +11,37 @@ const api = axios.create({
     'Content-Type': 'application/json',
   },
 });
+
+// Add request interceptor to include Firebase auth token
+api.interceptors.request.use(
+  async (config) => {
+    try {
+      const user = auth.currentUser;
+      if (user) {
+        const token = await user.getIdToken();
+        config.headers.Authorization = `Bearer ${token}`;
+      }
+    } catch (error) {
+      console.error('Error getting auth token:', error);
+    }
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
+
+// Add response interceptor to handle auth errors
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      console.error('Authentication error - user may need to log in');
+      // You could dispatch a logout action here or redirect to login
+    }
+    return Promise.reject(error);
+  }
+);
 
 // API service methods
 export const apiService = {
@@ -46,10 +78,24 @@ export const apiService = {
 
     // Get available dates
     getAvailableDates: async () => {
-      const response = await api.get('/menu');
-      const items = response.data;
-      const dates = [...new Set(items.map(item => item.date))].sort();
-      return dates;
+
+      const response = await api.get('/menu/dates');
+      return response.data;
+    },
+
+    getMenuByDate: async (date, mealTime = null, diningHall = null) => {
+      const params = new URLSearchParams({ date });
+      if (mealTime) params.append('mealTime', mealTime);
+      if (diningHall) params.append('diningHall', diningHall);
+      
+      const response = await api.get(`/menu?${params.toString()}`);
+      return response.data;
+    },
+
+    searchItems: async (searchParams) => {
+      const queryParams = new URLSearchParams(searchParams).toString();
+      const response = await api.get(`/menu/search?${queryParams}`);
+      return response.data;
     },
   },
 
@@ -57,33 +103,25 @@ export const apiService = {
   mealPlans: {
     // Generate a meal plan based on preferences
     generate: async (preferences) => {
-      console.log('🚀 API Service: Starting meal plan generation...');
-      console.log('📋 Preferences being sent:', preferences);
-      
       try {
-        console.log('📡 Making POST request to:', '/mealplans/generate-test');
         const response = await api.post('/mealplans/generate-test', preferences);
-        console.log('✅ API Service: Response received:', {
-          status: response.status,
-          dataKeys: Object.keys(response.data),
-          hasMessage: !!response.data.message,
-          hasMealPlan: !!response.data.mealPlan
-        });
         return response.data;
       } catch (error) {
-        console.error('❌ API Service: Error occurred:', error);
-        console.error('Error details:', {
-          message: error.message,
-          response: error.response?.data,
-          status: error.response?.status
-        });
         throw error;
       }
     },
 
     // Get user's meal plans (requires authentication)
-    getUserPlans: async () => {
-      const response = await api.get('/mealplans/user');
+    getUserPlans: async (params = {}) => {
+      const queryParams = new URLSearchParams(params).toString();
+      const url = queryParams ? `/mealplans?${queryParams}` : '/mealplans';
+      const response = await api.get(url);
+      return response.data;
+    },
+
+    // Get a specific meal plan by ID (requires authentication)
+    getById: async (id) => {
+      const response = await api.get(`/mealplans/${id}`);
       return response.data;
     },
 
@@ -93,9 +131,29 @@ export const apiService = {
       return response.data;
     },
 
+    // Save a generated meal plan (requires authentication)
+    save: async (mealPlanData) => {
+      const response = await api.post('/mealplans/save', mealPlanData);
+      return response.data;
+    },
+
+    // Update a meal plan (requires authentication)
+    update: async (id, updateData) => {
+      const response = await api.put(`/mealplans/${id}`, updateData);
+      return response.data;
+    },
+
     // Delete a meal plan (requires authentication)
     delete: async (id) => {
       const response = await api.delete(`/mealplans/${id}`);
+      return response.data;
+    },
+
+    // Search menu items for editing (requires authentication)
+    searchMenuItems: async (params = {}) => {
+      const queryParams = new URLSearchParams(params).toString();
+      const url = queryParams ? `/menu/search?${queryParams}` : '/menu/search';
+      const response = await api.get(url);
       return response.data;
     },
   },

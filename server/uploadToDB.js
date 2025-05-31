@@ -18,24 +18,24 @@ function transformRawData(raw) {
     if (typeof value === 'string') {
       // Remove 'g' and any other non-numeric characters, then parse
       const cleaned = value.replace(/[^0-9.\-]/g, '');
-      return parseFloat(cleaned) || 0;
-    }
-    return 0;
-  };
-  
+            return parseFloat(cleaned) || 0;
+          }
+          return 0;
+        };
+
   for(const [date, dateData] of Object.entries(raw)) {
     for (const [meal_period, halls] of Object.entries(dateData.meals)) {
       for (const [dining_hall, entries] of Object.entries(halls)) {
         for (const entry of entries) {
           const item = {
             date: new Date(date),
-            dining_hall,
-            meal_period,
+          dining_hall,
+          meal_period,
             name: entry.name || '',
             station: entry.station || '',
             tags: entry.tags || [],
             ingredients: entry.ingredients || [],
-            allergens: entry.allergens || [],
+          allergens: entry.allergens || [],
             nutrition: {
               calories: parseNutrition(entry.calories),
               protein: parseNutrition(entry.protein),
@@ -46,9 +46,9 @@ function transformRawData(raw) {
           };
 
           items.push(item);
-        }
       }
     }
+  }
   }
   console.log(`Total items processed: ${items.length}`);
   return items;

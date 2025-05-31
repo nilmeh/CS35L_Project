@@ -73,6 +73,38 @@
   font-size: 1.2rem;
 }
 
+.dining-hall-info {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+  padding: 0.75rem 1rem;
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 12px;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.dining-hall-icon {
+  font-size: 1.1rem;
+}
+
+.dining-hall-label {
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.9);
+  font-weight: 500;
+}
+
+.dining-hall-name {
+  font-size: 0.95rem;
+  color: white;
+  font-weight: 600;
+  background: rgba(255, 255, 255, 0.2);
+  padding: 0.25rem 0.75rem;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
 /* Nutrition Overview */
 .nutrition-overview {
   margin-bottom: 2.5rem;
@@ -455,6 +487,73 @@
 
 .button-icon {
   font-size: 1.2rem;
+}
+
+/* Save Status Messages */
+.save-status {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem 1.5rem;
+  border-radius: var(--border-radius);
+  margin-bottom: 1rem;
+  font-weight: 500;
+}
+
+.save-status.success {
+  background: linear-gradient(135deg, #d4edda, #c3e6cb);
+  color: #155724;
+  border: 1px solid #c3e6cb;
+}
+
+.save-status.error {
+  background: linear-gradient(135deg, #f8d7da, #f5c6cb);
+  color: #721c24;
+  border: 1px solid #f5c6cb;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+/* Authentication Info */
+.auth-info {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem 1.5rem;
+  background: linear-gradient(135deg, #e3f2fd, #bbdefb);
+  color: #1565c0;
+  border: 1px solid #bbdefb;
+  border-radius: var(--border-radius);
+  margin-bottom: 1rem;
+  font-weight: 500;
+}
+
+.info-icon {
+  font-size: 1.2rem;
+}
+
+/* Login Button */
+.action-button.login {
+  background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+  color: white;
+}
+
+.action-button.login:hover {
+  background: linear-gradient(135deg, #1d4ed8, #1e40af);
+}
+
+.action-button.login-prompt {
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  color: white;
+  padding: 0.5rem 1rem;
+  font-size: 0.9rem;
+  min-width: auto;
+  margin-top: 0.5rem;
+}
+
+.action-button.login-prompt:hover {
+  background: linear-gradient(135deg, #d97706, #b45309);
 }
 
 /* Responsive Design */

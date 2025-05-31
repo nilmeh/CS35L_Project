@@ -1,336 +1,364 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import {
-  BarChart, Bar, PieChart, Pie, RadarChart, PolarGrid, PolarAngleAxis, 
-  PolarRadiusAxis, Radar, ResponsiveContainer, Cell, Tooltip, XAxis, YAxis,
-  Legend, LineChart, Line, CartesianGrid
-} from 'recharts';
+import { useAuth } from '../components/AuthProvider';
+import { apiService } from '../services/api';
 import './Dashboard.css';
 
-// Color palette for charts
-const CHART_COLORS = {
-  protein: '#4264d0',
-  fat: '#f6b93b',
-  sugar: '#e55039',
-  carbs: '#6ab04c',
-  calories: '#4834d4'
-};
-
 function Dashboard() {
-  const [currentPlan, setCurrentPlan] = useState(null);
+  const { user } = useAuth();
+  const [mealPlans, setMealPlans] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [weeklyData, setWeeklyData] = useState([]);
-  
+  const [analytics, setAnalytics] = useState({
+    totalPlans: 0,
+    avgCalories: 0,
+    avgProtein: 0,
+    weeklyNutrition: [],
+    macroDistribution: { carbs: 0, protein: 0, fat: 0 },
+    favoriteFoods: [],
+    nutritionTrends: []
+  });
+
   useEffect(() => {
-    // Simulate API call
-    setTimeout(() => {
-      // Replace with actual API call later
-      const savedPlan = {
-        id: 'mp-123456',
-        name: 'My Lunch Plan',
-        createdAt: '2023-05-15',
-        diningHall: 'De Neve',
-        mealTime: 'lunch',
-        totalCalories: 850,
-        totalProtein: 65,
-        totalFat: 20,
-        totalSugar: 15,
-        totalCarbs: 95,
-        items: [
-          { name: 'Grilled Chicken Breast', servings: 2, calories: 240, protein: 42, fat: 6, carbs: 0, sugar: 0 },
-          { name: 'Steamed Broccoli', servings: 1, calories: 55, protein: 3, fat: 0, carbs: 11, sugar: 2 },
-          { name: 'Brown Rice', servings: 1, calories: 215, protein: 5, fat: 2, carbs: 45, sugar: 1 },
-          { name: 'Greek Yogurt', servings: 1, calories: 100, protein: 15, fat: 0, carbs: 6, sugar: 6 },
-          { name: 'Apple', servings: 1, calories: 95, protein: 0, fat: 0, carbs: 25, sugar: 6 }
-        ]
-      };
-      
-      // Generate mock weekly data
-      const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-      const weekData = days.map(day => ({
-        day,
-        calories: Math.floor(Math.random() * 500) + 700,
-        protein: Math.floor(Math.random() * 30) + 50,
-        fat: Math.floor(Math.random() * 15) + 15,
-        sugar: Math.floor(Math.random() * 10) + 10,
-        carbs: Math.floor(Math.random() * 50) + 80
-      }));
-      
-      setWeeklyData(weekData);
-      setCurrentPlan(savedPlan);
-      setLoading(false);
-    }, 1000);
-  }, []);
-  
-  // Create data for pie chart showing macro distribution
-  const createMacroData = () => {
-    if (!currentPlan) return [];
-    
-    // Calculate total calories from macros
-    const proteinCals = currentPlan.totalProtein * 4;
-    const carbsCals = currentPlan.totalCarbs * 4;
-    const fatCals = currentPlan.totalFat * 9;
-    
-    return [
-      { name: 'Protein', value: proteinCals, percent: Math.round((proteinCals / currentPlan.totalCalories) * 100), color: CHART_COLORS.protein },
-      { name: 'Carbs', value: carbsCals, percent: Math.round((carbsCals / currentPlan.totalCalories) * 100), color: CHART_COLORS.carbs },
-      { name: 'Fat', value: fatCals, percent: Math.round((fatCals / currentPlan.totalCalories) * 100), color: CHART_COLORS.fat }
-    ];
-  };
-  
-  // Create data for food items bar chart
-  const createFoodItemsData = () => {
-    if (!currentPlan) return [];
-    return currentPlan.items.map(item => ({
-      name: item.name.length > 15 ? item.name.substring(0, 15) + '...' : item.name,
-      calories: item.calories,
-      protein: item.protein,
-      fat: item.fat,
-      carbs: item.carbs,
-      sugar: item.sugar,
-      fullName: item.name // for tooltip
-    }));
-  };
-  
-  // Create data for radar chart
-  const createNutritionRadarData = () => {
-    if (!currentPlan) return [];
-    
-    // Define ideal daily values
-    const idealDailyValues = {
-      protein: 50, // g
-      fat: 65, // g
-      sugar: 25, // g
-      carbs: 300, // g
-      calories: 2000 // kcal
-    };
-    
-    return [
-      {
-        subject: 'Protein',
-        A: Math.min(100, Math.round((currentPlan.totalProtein / idealDailyValues.protein) * 100)),
-        fullMark: 100
-      },
-      {
-        subject: 'Fat',
-        A: Math.min(100, Math.round((currentPlan.totalFat / idealDailyValues.fat) * 100)),
-        fullMark: 100
-      },
-      {
-        subject: 'Sugar',
-        A: Math.min(100, Math.round((currentPlan.totalSugar / idealDailyValues.sugar) * 100)),
-        fullMark: 100
-      },
-      {
-        subject: 'Carbs',
-        A: Math.min(100, Math.round((currentPlan.totalCarbs / idealDailyValues.carbs) * 100)),
-        fullMark: 100
-      },
-      {
-        subject: 'Calories',
-        A: Math.min(100, Math.round((currentPlan.totalCalories / idealDailyValues.calories) * 100)),
-        fullMark: 100
+    const fetchDashboardData = async () => {
+      if (!user) {
+        setLoading(false);
+        return;
       }
-    ];
-  };
-  
-  // Custom tooltip for the pie chart
-  const CustomPieTooltip = ({ active, payload }) => {
-    if (active && payload && payload.length) {
-      return (
-        <div className="custom-tooltip">
-          <p className="label">{`${payload[0].name}: ${payload[0].payload.percent}%`}</p>
-          <p className="intro">{`${payload[0].value} calories`}</p>
-        </div>
-      );
+
+      try {
+        setLoading(true);
+        const response = await apiService.mealPlans.getUserPlans({ limit: 50 });
+        const plans = response.plans || [];
+        setMealPlans(plans);
+        
+        // Calculate analytics
+        const analyticsData = calculateAnalytics(plans);
+        setAnalytics(analyticsData);
+      } catch (error) {
+        console.error('Error fetching dashboard data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchDashboardData();
+  }, [user]);
+
+  const calculateAnalytics = (plans) => {
+    if (!plans || plans.length === 0) {
+      return {
+        totalPlans: 0,
+        avgCalories: 0,
+        avgProtein: 0,
+        weeklyNutrition: [],
+        macroDistribution: { carbs: 30, protein: 25, fat: 45 },
+        favoriteFoods: [],
+        nutritionTrends: []
+      };
     }
-    return null;
+
+    const totalCalories = plans.reduce((sum, plan) => sum + (plan.nutritionTotals?.calories || 0), 0);
+    const totalProtein = plans.reduce((sum, plan) => sum + (plan.nutritionTotals?.protein || 0), 0);
+    const totalFat = plans.reduce((sum, plan) => sum + (plan.nutritionTotals?.fat || 0), 0);
+    const totalSugar = plans.reduce((sum, plan) => sum + (plan.nutritionTotals?.sugar || 0), 0);
+
+    // Calculate weekly nutrition (last 7 days)
+    const weeklyNutrition = getWeeklyNutrition(plans);
+
+    // Calculate macro distribution
+    const avgCaloriesFromFat = totalFat * 9 / plans.length;
+    const avgCaloriesFromProtein = totalProtein * 4 / plans.length;
+    const avgTotalCalories = totalCalories / plans.length;
+    const avgCaloriesFromCarbs = avgTotalCalories - avgCaloriesFromFat - avgCaloriesFromProtein;
+
+    const macroDistribution = {
+      carbs: Math.round((avgCaloriesFromCarbs / avgTotalCalories) * 100) || 30,
+      protein: Math.round((avgCaloriesFromProtein / avgTotalCalories) * 100) || 25,
+      fat: Math.round((avgCaloriesFromFat / avgTotalCalories) * 100) || 45
+    };
+
+    // Get favorite foods
+    const favoriteFoods = getFavoriteFoods(plans);
+
+    return {
+      totalPlans: plans.length,
+      avgCalories: Math.round(totalCalories / plans.length) || 0,
+      avgProtein: Math.round(totalProtein / plans.length) || 0,
+      avgSugar: Math.round(totalSugar / plans.length) || 0,
+      avgFat: Math.round(totalFat / plans.length) || 0,
+      weeklyNutrition,
+      macroDistribution,
+      favoriteFoods,
+      nutritionTrends: plans.slice(-7) // Last 7 plans for trends
+    };
   };
-  
-  // Custom tooltip for the bar chart
-  const CustomBarTooltip = ({ active, payload, label }) => {
-    if (active && payload && payload.length) {
-      return (
-        <div className="custom-tooltip">
-          <p className="label">{payload[0].payload.fullName}</p>
-          {payload.map((entry, index) => (
-            <p key={`item-${index}`} style={{ color: entry.color }}>
-              {`${entry.name}: ${entry.value}`}
-            </p>
-          ))}
-        </div>
-      );
-    }
-    return null;
+
+  const getWeeklyNutrition = (plans) => {
+    const today = new Date();
+    const weekAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
+    
+    return plans
+      .filter(plan => new Date(plan.date) >= weekAgo)
+      .map(plan => ({
+        date: new Date(plan.date).toLocaleDateString('en-US', { weekday: 'short' }),
+        calories: plan.nutritionTotals?.calories || 0,
+        protein: plan.nutritionTotals?.protein || 0,
+        name: plan.name
+      }));
   };
-  
-  if (loading) {
+
+  const getFavoriteFoods = (plans) => {
+    const foodCounts = {};
+    
+    plans.forEach(plan => {
+      (plan.items || []).forEach(item => {
+        const name = item.name;
+        if (name) {
+          foodCounts[name] = (foodCounts[name] || 0) + (item.servings || 1);
+        }
+      });
+    });
+
+    return Object.entries(foodCounts)
+      .sort(([,a], [,b]) => b - a)
+      .slice(0, 5)
+      .map(([name, count]) => ({ name, count }));
+  };
+
+  if (!user) {
     return (
       <div className="dashboard-page">
-        <div className="dashboard-loading">
-          <p>Loading your meal plans...</p>
+        <div className="auth-required">
+          <h2>Welcome to UCLA Dining Planner</h2>
+          <p>Please log in to view your personalized nutrition dashboard and meal planning analytics.</p>
+          <Link to="/login" className="login-link">Get Started</Link>
         </div>
       </div>
     );
   }
-  
+
+  if (loading) {
+    return (
+      <div className="dashboard-page">
+        <div className="loading-state">
+          <div className="loading-spinner"></div>
+          <h3>Loading your dashboard...</h3>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="dashboard-page">
       <div className="dashboard-header">
-        <h2>Your Dashboard</h2>
-        <p>View and manage your meal plans and nutritional stats</p>
+        <div className="header-content">
+          <h1>Nutrition Dashboard</h1>
+          <p>Track your meal planning progress and nutritional insights</p>
+        </div>
+        <div className="header-actions">
+          <Link to="/preferences" className="button-link">
+            Create Meal Plan
+          </Link>
+          <Link to="/my-plans" className="button-link secondary">
+            View All Plans
+          </Link>
+        </div>
       </div>
-      
+
       <div className="dashboard-content">
+        {/* Stats Overview */}
         <div className="dashboard-section">
           <div className="section-header">
-            <h3>Current Meal Plan</h3>
-            <div className="section-actions">
-              <Link to="/edit-plan" className="button-link">Edit Plan</Link>
-              <Link to="/preferences" className="button-link secondary">New Plan</Link>
+            <h3>📊 Overview Stats</h3>
+          </div>
+          <div className="stats-grid">
+            <div className="stat-card">
+              <div className="stat-icon">🍽️</div>
+              <div className="stat-content">
+                <span className="stat-value">{analytics.totalPlans}</span>
+                <span className="stat-label">Total Meal Plans</span>
+              </div>
+            </div>
+            <div className="stat-card">
+              <div className="stat-icon">🔥</div>
+              <div className="stat-content">
+                <span className="stat-value">{analytics.avgCalories}</span>
+                <span className="stat-label">Avg Calories/Plan</span>
+              </div>
+            </div>
+            <div className="stat-card">
+              <div className="stat-icon">💪</div>
+              <div className="stat-content">
+                <span className="stat-value">{analytics.avgProtein}g</span>
+                <span className="stat-label">Avg Protein/Plan</span>
+              </div>
+            </div>
+            <div className="stat-card">
+              <div className="stat-icon">🥑</div>
+              <div className="stat-content">
+                <span className="stat-value">{analytics.avgFat}g</span>
+                <span className="stat-label">Avg Fat/Plan</span>
+              </div>
             </div>
           </div>
-          
-          {currentPlan ? (
+        </div>
+
+        {/* Recent Meal Plan */}
+        {mealPlans.length > 0 && (
+          <div className="dashboard-section">
+            <div className="section-header">
+              <h3>🍽️ Latest Meal Plan</h3>
+              <Link to="/my-plans" className="button-link secondary">View All</Link>
+            </div>
             <div className="meal-plan-card">
               <div className="meal-plan-header">
-                <h4>{currentPlan.name}</h4>
-                <span className="meal-plan-meta">
-                  {currentPlan.diningHall} • {currentPlan.mealTime}
-                </span>
+                <h4>{mealPlans[0].name}</h4>
+                <p className="meal-plan-meta">
+                  {new Date(mealPlans[0].date).toLocaleDateString()} • {mealPlans[0].mealTime}
+                  {mealPlans[0].diningHall && ` • ${mealPlans[0].diningHall}`}
+                </p>
               </div>
-              
               <div className="meal-plan-stats">
                 <div className="stat-item">
-                  <span className="stat-value">{currentPlan.totalCalories}</span>
+                  <span className="stat-value">{Math.round(mealPlans[0].nutritionTotals?.calories || 0)}</span>
                   <span className="stat-label">Calories</span>
                 </div>
                 <div className="stat-item">
-                  <span className="stat-value">{currentPlan.totalProtein}g</span>
+                  <span className="stat-value">{Math.round(mealPlans[0].nutritionTotals?.protein || 0)}g</span>
                   <span className="stat-label">Protein</span>
                 </div>
                 <div className="stat-item">
-                  <span className="stat-value">{currentPlan.totalFat}g</span>
-                  <span className="stat-label">Fat</span>
-                </div>
-                <div className="stat-item">
-                  <span className="stat-value">{currentPlan.totalSugar}g</span>
+                  <span className="stat-value">{Math.round(mealPlans[0].nutritionTotals?.sugar || 0)}g</span>
                   <span className="stat-label">Sugar</span>
                 </div>
-              </div>
-              
-              <div className="macro-distribution-chart">
-                <h5>Calorie Distribution</h5>
-                <div className="chart-container">
-                  <ResponsiveContainer width="100%" height={200}>
-                    <PieChart>
-                      <Pie
-                        data={createMacroData()}
-                        cx="50%"
-                        cy="50%"
-                        labelLine={false}
-                        outerRadius={80}
-                        innerRadius={40}
-                        fill="#8884d8"
-                        dataKey="value"
-                        label={({ name, percent }) => `${name} ${percent}%`}
-                      >
-                        {createMacroData().map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={entry.color} />
-                        ))}
-                      </Pie>
-                      <Tooltip content={<CustomPieTooltip />} />
-                    </PieChart>
-                  </ResponsiveContainer>
+                <div className="stat-item">
+                  <span className="stat-value">{Math.round(mealPlans[0].nutritionTotals?.fat || 0)}g</span>
+                  <span className="stat-label">Fat</span>
                 </div>
               </div>
-              
               <div className="meal-plan-items">
-                <h5>Meal Items</h5>
-                <ul>
-                  {currentPlan.items.map((item, index) => (
-                    <li key={index}>
-                      <span>{item.name}</span>
-                      <span className="item-servings">x{item.servings}</span>
-                    </li>
-                  ))}
-                </ul>
-                
-                <div className="food-items-chart">
-                  <h5>Nutrition by Food Item</h5>
-                  <div className="chart-container">
-                    <ResponsiveContainer width="100%" height={250}>
-                      <BarChart
-                        data={createFoodItemsData()}
-                        margin={{ top: 20, right: 30, left: 20, bottom: 60 }}
-                      >
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis 
-                          dataKey="name" 
-                          tick={{ fontSize: 12 }} 
-                          angle={-45} 
-                          textAnchor="end"
-                        />
-                        <YAxis />
-                        <Tooltip content={<CustomBarTooltip />} />
-                        <Legend />
-                        <Bar dataKey="protein" name="Protein (g)" fill={CHART_COLORS.protein} />
-                        <Bar dataKey="carbs" name="Carbs (g)" fill={CHART_COLORS.carbs} />
-                        <Bar dataKey="fat" name="Fat (g)" fill={CHART_COLORS.fat} />
-                      </BarChart>
-                    </ResponsiveContainer>
+                <h5>Food Items ({mealPlans[0].items?.length || 0})</h5>
+                {(mealPlans[0].items || []).length > 0 ? (
+                  <ul>
+                    {(mealPlans[0].items || []).slice(0, 5).map((item, index) => (
+                      <li key={index}>
+                        <span>{item.name}</span>
+                        <span className="item-servings">x{item.servings || 1}</span>
+                      </li>
+                    ))}
+                    {(mealPlans[0].items?.length || 0) > 5 && (
+                      <li className="more-items">+{mealPlans[0].items.length - 5} more items</li>
+                    )}
+                  </ul>
+                ) : (
+                  <div className="empty-plan">
+                    <p>No items in this meal plan</p>
                   </div>
-                </div>
+                )}
               </div>
             </div>
-          ) : (
-            <div className="empty-plan">
-              <p>You don't have any meal plans yet.</p>
-              <Link to="/preferences" className="button-link">Create Your First Plan</Link>
+          </div>
+        )}
+
+        {/* Nutrition Analytics */}
+        <div className="nutrition-chart">
+          <div className="section-header">
+            <h3>📈 Nutrition Analytics</h3>
+          </div>
+          
+          {/* Macro Distribution Chart */}
+          <div className="chart-container macro-distribution-chart">
+            <h5>Macronutrient Distribution</h5>
+            <div className="macro-chart">
+              <div className="macro-item">
+                <div 
+                  className="macro-bar carbs" 
+                  style={{ width: `${analytics.macroDistribution.carbs}%` }}
+                ></div>
+                <span className="macro-label">Carbs {analytics.macroDistribution.carbs}%</span>
+              </div>
+              <div className="macro-item">
+                <div 
+                  className="macro-bar protein" 
+                  style={{ width: `${analytics.macroDistribution.protein}%` }}
+                ></div>
+                <span className="macro-label">Protein {analytics.macroDistribution.protein}%</span>
+              </div>
+              <div className="macro-item">
+                <div 
+                  className="macro-bar fat" 
+                  style={{ width: `${analytics.macroDistribution.fat}%` }}
+                ></div>
+                <span className="macro-label">Fat {analytics.macroDistribution.fat}%</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Weekly Nutrition Chart */}
+          {analytics.weeklyNutrition.length > 0 && (
+            <div className="chart-container weekly-chart">
+              <h5>Weekly Nutrition Trends</h5>
+              <div className="weekly-chart-grid">
+                {analytics.weeklyNutrition.map((day, index) => (
+                  <div key={index} className="day-column">
+                    <div className="day-label">{day.date}</div>
+                    <div className="calorie-bar">
+                      <div 
+                        className="calorie-fill" 
+                        style={{ height: `${Math.min(day.calories / 20, 100)}%` }}
+                        title={`${day.calories} calories`}
+                      ></div>
+                    </div>
+                    <div className="day-calories">{day.calories}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Favorite Foods */}
+          {analytics.favoriteFoods.length > 0 && (
+            <div className="chart-container food-items-chart">
+              <h5>Most Frequently Selected Foods</h5>
+              <div className="food-items-list">
+                {analytics.favoriteFoods.map((food, index) => (
+                  <div key={index} className="food-item">
+                    <span className="food-name">{food.name}</span>
+                    <div className="food-bar">
+                      <div 
+                        className="food-fill" 
+                        style={{ width: `${(food.count / analytics.favoriteFoods[0].count) * 100}%` }}
+                      ></div>
+                    </div>
+                    <span className="food-count">{food.count}x</span>
+                  </div>
+                ))}
+              </div>
             </div>
           )}
         </div>
-        
+
+        {/* Quick Actions */}
         <div className="dashboard-section">
           <div className="section-header">
-            <h3>Nutrition Summary</h3>
+            <h3>🚀 Quick Actions</h3>
           </div>
-          
-          <div className="nutrition-chart">
-            <h5>Daily Targets</h5>
-            <div className="chart-container">
-              <ResponsiveContainer width="100%" height={250}>
-                <RadarChart cx="50%" cy="50%" outerRadius="80%" data={createNutritionRadarData()}>
-                  <PolarGrid />
-                  <PolarAngleAxis dataKey="subject" />
-                  <PolarRadiusAxis angle={90} domain={[0, 100]} tick={false} />
-                  <Radar name="Percentage of Daily Goal" dataKey="A" stroke={CHART_COLORS.protein} 
-                    fill={CHART_COLORS.protein} fillOpacity={0.6} />
-                  <Tooltip />
-                </RadarChart>
-              </ResponsiveContainer>
-            </div>
-          </div>
-          
-          <div className="weekly-chart">
-            <h5>Weekly Nutrition Trends</h5>
-            <div className="chart-container">
-              <ResponsiveContainer width="100%" height={250}>
-                <LineChart
-                  data={weeklyData}
-                  margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
-                >
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="day" />
-                  <YAxis />
-                  <Tooltip />
-                  <Legend />
-                  <Line type="monotone" dataKey="protein" stroke={CHART_COLORS.protein} activeDot={{ r: 8 }} />
-                  <Line type="monotone" dataKey="carbs" stroke={CHART_COLORS.carbs} />
-                  <Line type="monotone" dataKey="fat" stroke={CHART_COLORS.fat} />
-                </LineChart>
-              </ResponsiveContainer>
-            </div>
+          <div className="quick-actions">
+            <Link to="/preferences" className="action-card">
+              <div className="action-icon">✨</div>
+              <h4>Create Meal Plan</h4>
+              <p>Generate a personalized meal plan based on your preferences</p>
+            </Link>
+            <Link to="/menu" className="action-card">
+              <div className="action-icon">📋</div>
+              <h4>Browse Menu</h4>
+              <p>Explore available dining options and nutritional information</p>
+            </Link>
+            <Link to="/my-plans" className="action-card">
+              <div className="action-icon">📝</div>
+              <h4>Manage Plans</h4>
+              <p>View, edit, and organize your saved meal plans</p>
+            </Link>
           </div>
         </div>
       </div>

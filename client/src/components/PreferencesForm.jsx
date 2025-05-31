@@ -5,7 +5,7 @@ import './PreferencesForm.css';
 function PreferencesForm({ onSubmit, isLoading = false }) {
   const [availableDates, setAvailableDates] = useState([]);
   const [preferences, setPreferences] = useState({
-    targetCalories: 2000,
+    targetCalories: 1000,
     minProtein: 50,
     maxSugar: '',
     maxFat: '',
@@ -22,7 +22,7 @@ function PreferencesForm({ onSubmit, isLoading = false }) {
     date: ""
   });
 
-  // Separate state for the raw input strings
+
   const [tagInputs, setTagInputs] = useState({
     allowedTags: '',
     disallowedTags: '',
@@ -63,15 +63,23 @@ function PreferencesForm({ onSubmit, isLoading = false }) {
 
   const fetchAvailableDates = async () => {
     try {
-      const dates = await apiService.menu.getAvailableDates();
-      setAvailableDates(dates);
+      const response = await apiService.menu.getAvailableDates();
+      setAvailableDates(response.dates || []);
     } catch (error) {
       console.error('Error fetching available dates:', error);
     }
   };
 
   const formatDate = (dateString) => {
-    const date = new Date(dateString);
+    // Handle YYYY-MM-DD format to avoid timezone issues
+    if (dateString.includes('T')) {
+      // If it's an ISO string, extract date part first
+      dateString = dateString.split('T')[0];
+    }
+    
+    const [year, month, day] = dateString.split('-');
+    const date = new Date(year, month - 1, day); // month is 0-indexed
+    
     return date.toLocaleDateString('en-US', { 
       weekday: 'long',
       year: 'numeric', 
@@ -81,9 +89,17 @@ function PreferencesForm({ onSubmit, isLoading = false }) {
   };
 
   const isToday = (dateString) => {
+    // Handle YYYY-MM-DD format to avoid timezone issues
+    if (dateString.includes('T')) {
+      dateString = dateString.split('T')[0];
+    }
+    
     const today = new Date();
-    const date = new Date(dateString);
-    return today.toDateString() === date.toDateString();
+    const todayString = today.getFullYear() + '-' + 
+                       String(today.getMonth() + 1).padStart(2, '0') + '-' + 
+                       String(today.getDate()).padStart(2, '0');
+    
+    return todayString === dateString;
   };
 
   const validateForm = () => {
@@ -188,13 +204,11 @@ function PreferencesForm({ onSubmit, isLoading = false }) {
       return;
     }
     
-    // Final processing of tag inputs to ensure they're properly parsed
     const finalAllowedTags = tagInputs.allowedTags.split(',').map(tag => tag.trim()).filter(Boolean);
     const finalDisallowedTags = tagInputs.disallowedTags.split(',').map(tag => tag.trim()).filter(Boolean);
     const finalLikedFoods = tagInputs.likedFoods.split(',').map(tag => tag.trim()).filter(Boolean);
     const finalDislikedFoods = tagInputs.dislikedFoods.split(',').map(tag => tag.trim()).filter(Boolean);
     
-    // Convert empty strings to undefined for optional fields
     const submitData = {
       ...preferences,
       allowedTags: finalAllowedTags,
@@ -204,18 +218,6 @@ function PreferencesForm({ onSubmit, isLoading = false }) {
       maxSugar: preferences.maxSugar === '' ? undefined : preferences.maxSugar,
       maxFat: preferences.maxFat === '' ? undefined : preferences.maxFat,
     };
-    
-    console.log('Submitting meal preferences:', submitData);
-    console.log('Raw tag inputs:', tagInputs);
-    console.log('Processed tags:', { 
-      allowedTags: finalAllowedTags, 
-      disallowedTags: finalDisallowedTags 
-    });
-    console.log('Food preferences:', { 
-      likedFoods: finalLikedFoods, 
-      dislikedFoods: finalDislikedFoods 
-    });
-    console.log('Excluded categories:', preferences.excludedCategories);
     
     onSubmit(submitData);
   };

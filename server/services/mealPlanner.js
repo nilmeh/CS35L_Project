@@ -243,6 +243,12 @@ function containsAnimalProducts(ingredientsText) {
  * @returns {Array} Enhanced menu data with additional tags
  */
 function enhanceMenuData(menuData) {
+  // Safety check: return empty array if menuData is undefined or null
+  if (!menuData || !Array.isArray(menuData)) {
+    console.warn('⚠️ enhanceMenuData: menuData is not a valid array:', menuData);
+    return [];
+  }
+  
   return menuData.map(item => {
     // Convert Mongoose document to plain object
     const plainItem = item.toObject ? item.toObject() : item;
@@ -511,6 +517,145 @@ function applySortingVariation(items, strategy) {
 }
 
 /**
+ * Analyzes all available dining halls and selects the best one based on user preferences
+ * @param {Array} menuData - All available menu items
+ * @param {Object} userPreferences - User's dietary preferences and restrictions
+ * @returns {Object} Analysis result with best dining hall and summary
+ */
+function analyzeDiningHallOptions(menuData, userPreferences) {
+    const {
+        targetCalories,
+        minProtein,
+        maxSugar,
+        maxFat,
+        vegetarian,
+        vegan,
+        allowedTags = [],
+        disallowedTags = [],
+        allergens = [],
+        excludedCategories = [],
+        mealTime,
+        likedFoods = [],
+        dislikedFoods = []
+    } = userPreferences;
+
+    // Get all unique dining halls from the menu data
+    const diningHalls = [...new Set(menuData.map(item => item.dining_hall || item.location).filter(Boolean))];
+    
+    const hallAnalysis = {};
+    
+    // Analyze each dining hall
+    for (const hall of diningHalls) {
+        const hallItems = menuData.filter(item => 
+            (item.dining_hall === hall || item.location === hall) &&
+            (!mealTime || item.meal_period === mealTime || item.mealTime === mealTime)
+        );
+        
+        if (hallItems.length === 0) {
+            hallAnalysis[hall] = { score: 0, availableItems: 0, qualifyingItems: 0 };
+            continue;
+        }
+        
+        // Filter items that meet user's dietary restrictions
+        const qualifyingItems = hallItems.filter(item => {
+            const passesVegetarianCheck = !vegetarian || item.isVegetarian;
+            const passesVeganCheck = !vegan || item.isVegan;
+            
+            const hasAllowedTags = allowedTags.length === 0 || 
+                                  allowedTags.some(tag => item.tags.some(itemTag => 
+                                    itemTag.toLowerCase().includes(tag.toLowerCase())));
+                                    
+            const hasNoDisallowedTags = !disallowedTags.some(tag => item.tags.some(itemTag => 
+                itemTag.toLowerCase().includes(tag.toLowerCase())));
+            
+            const hasNoAllergens = allergens.length === 0 || 
+                                  !allergens.some(allergen => {
+                                      const inAllergensList = item.allergens && item.allergens.some(itemAllergen => 
+                                          itemAllergen.toLowerCase().includes(allergen.toLowerCase()));
+                                      const inTags = item.tags.some(tag => 
+                                          tag.toLowerCase().includes(allergen.toLowerCase()));
+                                      return inAllergensList || inTags;
+                                  });
+            
+            const itemCategory = item.category || detectFoodCategory(item.name, item.station);
+            const notExcludedCategory = excludedCategories.length === 0 || 
+                                      !excludedCategories.includes(itemCategory);
+            
+            return passesVegetarianCheck && passesVeganCheck && hasAllowedTags && 
+                   hasNoDisallowedTags && hasNoAllergens && notExcludedCategory;
+        });
+        
+        // Calculate a score for this dining hall based on various factors
+        let score = 0;
+        
+        // Factor 1: Number of qualifying items (more options = better)
+        score += qualifyingItems.length * 10;
+        
+        // Factor 2: Nutritional completeness - can we meet calorie and protein targets?
+        const totalPossibleCalories = qualifyingItems.reduce((sum, item) => {
+            const calories = item.nutrition?.calories || 0;
+            return sum + (calories * 2); // max 2 servings per item
+        }, 0);
+        
+        const totalPossibleProtein = qualifyingItems.reduce((sum, item) => {
+            const protein = item.nutrition?.protein || 0;
+            return sum + (protein * 2);
+        }, 0);
+        
+        // Bonus if we can meet calorie target
+        if (totalPossibleCalories >= targetCalories) score += 50;
+        if (totalPossibleProtein >= minProtein) score += 50;
+        
+        // Factor 3: Category diversity (balanced meal is better)
+        const categories = new Set(qualifyingItems.map(item => 
+            item.category || detectFoodCategory(item.name, item.station)
+        ));
+        score += categories.size * 15; // Bonus for variety
+        
+        // Factor 4: Food preferences alignment
+        if (likedFoods.length > 0) {
+            const matchingLikedItems = qualifyingItems.filter(item =>
+                likedFoods.some(liked => 
+                    item.name.toLowerCase().includes(liked.toLowerCase()) ||
+                    item.tags.some(tag => tag.toLowerCase().includes(liked.toLowerCase()))
+                )
+            );
+            score += matchingLikedItems.length * 20; // Big bonus for liked foods
+        }
+        
+        if (dislikedFoods.length > 0) {
+            const matchingDislikedItems = qualifyingItems.filter(item =>
+                dislikedFoods.some(disliked => 
+                    item.name.toLowerCase().includes(disliked.toLowerCase()) ||
+                    item.tags.some(tag => tag.toLowerCase().includes(disliked.toLowerCase()))
+                )
+            );
+            score -= matchingDislikedItems.length * 30; // Penalty for disliked foods
+        }
+        
+        hallAnalysis[hall] = {
+            score,
+            availableItems: hallItems.length,
+            qualifyingItems: qualifyingItems.length,
+            totalPossibleCalories,
+            totalPossibleProtein,
+            categories: categories.size
+        };
+    }
+    
+    // Find the dining hall with the highest score
+    const bestHall = Object.entries(hallAnalysis).reduce((best, [hall, analysis]) => {
+        return analysis.score > best.score ? { hall, ...analysis } : best;
+    }, { hall: diningHalls[0] || 'Unknown', score: -1 });
+    
+    return {
+        bestDiningHall: bestHall.hall,
+        summary: hallAnalysis,
+        analysis: bestHall
+    };
+}
+
+/**
  * Generates a meal plan based on user preferences and available menu data
  * @param {Object} userPreferences - User's dietary preferences and restrictions
  * @param {Array} menuData - Available menu items
@@ -539,6 +684,18 @@ export function generateMealPlan(userPreferences, menuData) {
     // Enhance the menu data with additional tags and categories
     const enhancedMenuData = enhanceMenuData(menuData);
 
+    // STEP 1: Determine which dining hall to use
+    let selectedDiningHall = diningHall;
+    
+    if (!diningHall || diningHall === '') {
+        // If no dining hall specified, choose the best one based on available items
+        const diningHallAnalysis = analyzeDiningHallOptions(enhancedMenuData, userPreferences);
+        selectedDiningHall = diningHallAnalysis.bestDiningHall;
+        
+        console.log(`🏛️ Algorithm chose dining hall: ${selectedDiningHall} based on preferences`);
+        console.log(`📊 Dining hall analysis:`, diningHallAnalysis.summary);
+    }
+
     const MAX_SERVINGS = 2;
     const CATEGORY_LIMIT = {
         "Dessert": 1,
@@ -548,16 +705,15 @@ export function generateMealPlan(userPreferences, menuData) {
         "Beverage": 1
     };
 
-    // Filter menu items based on user preferences
+    // STEP 2: Filter menu items based on user preferences AND selected dining hall
     const filteredMenu = enhancedMenuData.filter(item => {
         // Check dietary restrictions - if user wants vegetarian/vegan, check if item qualifies
         const passesVegetarianCheck = !vegetarian || item.isVegetarian;
         const passesVeganCheck = !vegan || item.isVegan;
         
-        // Check location and meal time - handle both old and new model structures
-        const matchesLocation = !diningHall || 
-                               item.dining_hall === diningHall || 
-                               item.location === diningHall;
+        // IMPORTANT: Now we always filter by the selected dining hall (never mix halls)
+        const matchesLocation = item.dining_hall === selectedDiningHall || 
+                               item.location === selectedDiningHall;
         const matchesTime = !mealTime || 
                            item.meal_period === mealTime || 
                            item.mealTime === mealTime;
@@ -596,11 +752,13 @@ export function generateMealPlan(userPreferences, menuData) {
     if (filteredMenu.length === 0) {
         return {
             success: false,
-            message: "No items match your dietary preferences. Try adjusting your filters.",
+            message: `No items match your dietary preferences at ${selectedDiningHall}. Try adjusting your filters or selecting a different dining hall.`,
             selectedItems: [],
             totals: { calories: 0, protein: 0, sugar: 0, fat: 0 },
+            selectedDiningHall,
             debug: {
                 totalItems: enhancedMenuData.length,
+                selectedDiningHall,
                 preferences: userPreferences,
                 sampleItem: enhancedMenuData[0] ? {
                     name: enhancedMenuData[0].name,
@@ -616,12 +774,12 @@ export function generateMealPlan(userPreferences, menuData) {
     // Apply variation strategy based on regenerationType and variationSeed
     const variationStrategy = getVariationStrategy(regenerationType, variationSeed);
 
-    // Score menu items based on nutritional value and estimated calories with variation
+
     const scored = filteredMenu.map(item => {
-        // Use existing calories if available, otherwise estimate from macros
-        let calories = item.calories || item.calculatedCalories;
+        let calories = item.nutrition?.calories || 0;
+        
+        // Only calculate if no calories are available in database
         if (!calories || calories === 0) {
-            // Estimate calories based on typical values for food items
             const protein = item.nutrition?.protein || 0;
             const fat = item.nutrition?.fat || 0;
             const carbs = item.nutrition?.carbs || 0;
@@ -629,7 +787,7 @@ export function generateMealPlan(userPreferences, menuData) {
             if (protein + fat + carbs > 0) {
                 calories = (protein * 4) + (fat * 9) + (carbs * 4);
             } else {
-                // Fallback: estimate based on food category and name
+
                 const category = item.category || detectFoodCategory(item.name, item.station);
                 if (category === "Dessert") calories = 250;
                 else if (category === "Main Course") calories = 350;
@@ -847,6 +1005,7 @@ export function generateMealPlan(userPreferences, menuData) {
         itemsByCategory,
         totals,
         warnings,
+        selectedDiningHall,
         variationInfo: {
             strategy: variationStrategy.name,
             seed: variationSeed,

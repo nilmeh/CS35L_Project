@@ -39,8 +39,8 @@ function MenuPage() {
 
   const fetchAvailableDates = async () => {
     try {
-      const dates = await apiService.menu.getAvailableDates();
-      setAvailableDates(dates);
+      const response = await apiService.menu.getAvailableDates();
+      setAvailableDates(response.dates || []);
     } catch (error) {
       console.error('Error fetching available dates:', error);
       setError('Failed to load available dates');
@@ -155,7 +155,15 @@ function MenuPage() {
   };
 
   const formatDate = (dateString) => {
-    const date = new Date(dateString);
+    // Handle YYYY-MM-DD format to avoid timezone issues
+    if (dateString.includes('T')) {
+      // If it's an ISO string, extract date part first
+      dateString = dateString.split('T')[0];
+    }
+    
+    const [year, month, day] = dateString.split('-');
+    const date = new Date(year, month - 1, day); // month is 0-indexed
+    
     return date.toLocaleDateString('en-US', { 
       weekday: 'long',
       year: 'numeric', 
@@ -165,9 +173,17 @@ function MenuPage() {
   };
 
   const isToday = (dateString) => {
+    // Handle YYYY-MM-DD format to avoid timezone issues
+    if (dateString.includes('T')) {
+      dateString = dateString.split('T')[0];
+    }
+    
     const today = new Date();
-    const date = new Date(dateString);
-    return today.toDateString() === date.toDateString();
+    const todayString = today.getFullYear() + '-' + 
+                       String(today.getMonth() + 1).padStart(2, '0') + '-' + 
+                       String(today.getDate()).padStart(2, '0');
+    
+    return todayString === dateString;
   };
 
   if (loading) {
@@ -295,7 +311,7 @@ function MenuPage() {
                         <div className="nutrition-item">
                           <span className="nutrition-label">Calories:</span>
                           <span className="nutrition-value">
-                            {Math.round((item.nutrition?.fat || 0) * 9 + (item.nutrition?.protein || 0) * 4 + (item.nutrition?.carbs || 0) * 4)}
+                            {item.nutrition?.calories || 0}
                           </span>
                         </div>
                         <div className="nutrition-item">
@@ -343,7 +359,7 @@ function MenuPage() {
                   <div className="nutrition-detail">
                     <span className="label">Calories:</span>
                     <span className="value">
-                      {Math.round((selectedItem.nutrition?.fat || 0) * 9 + (selectedItem.nutrition?.protein || 0) * 4 + (selectedItem.nutrition?.carbs || 0) * 4)}
+                      {selectedItem.nutrition?.calories || 0}
                     </span>
                   </div>
                   <div className="nutrition-detail">
