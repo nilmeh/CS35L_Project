@@ -6,6 +6,7 @@ const menuItemSchema = new mongoose.Schema({
   meal_period: { type: String, enum: ['breakfast', 'lunch', 'dinner'], required: true },
   name: { type: String, required: true },
   station: { type: String, required: true },
+  calories: {type: Number, default: 0, required: true },
   tags: { type: [String], default: [] },
   ingredients: { type: [String], default: [] },
   allergens: { type: [String], default: [] },

@@ -33,6 +33,7 @@ function transformRawData(raw) {
             meal_period,
             name: entry.name || '',
             station: entry.station || '',
+            calories: entry.calories || '',
             tags: entry.tags || [],
             ingredients: entry.ingredients || [],
             allergens: entry.allergens || [],
