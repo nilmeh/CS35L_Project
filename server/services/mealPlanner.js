@@ -804,8 +804,8 @@ export function generateMealPlan(userPreferences, menuData) {
                         station: item.station,
                         preferenceScore: item.preferenceScore
                     });
-                }
-            }
+        }
+    }
 
             // If we've reached our calorie target, stop
             if (totals.calories >= targetCalories * 0.95) break;

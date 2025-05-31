@@ -116,7 +116,7 @@ export const createMealPlan = async (req, res) => {
     });
 
     await mealPlan.save();
-    
+
     res.status(201).json({
       message: 'Meal plan created successfully',
       mealPlan
@@ -136,11 +136,11 @@ export const updateMealPlan = async (req, res) => {
     
     // Find the meal plan
     const mealPlan = await MealPlan.findOne({ _id: id, userId });
-    
+
     if (!mealPlan) {
       return res.status(404).json({ message: 'Meal plan not found' });
     }
-    
+
     // Update allowed fields
     const allowedUpdates = ['name', 'date', 'mealTime', 'diningHall', 'items', 'preferences', 'isFavorite'];
     allowedUpdates.forEach(field => {

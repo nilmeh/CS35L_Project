@@ -63,8 +63,8 @@ function PreferencesForm({ onSubmit, isLoading = false }) {
 
   const fetchAvailableDates = async () => {
     try {
-      const dates = await apiService.menu.getAvailableDates();
-      setAvailableDates(dates);
+      const response = await apiService.menu.getAvailableDates();
+      setAvailableDates(response.dates || []);
     } catch (error) {
       console.error('Error fetching available dates:', error);
     }

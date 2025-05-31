@@ -86,17 +86,14 @@ function MealPlanResults({ mealPlan, onSave, compact = false, preferences = null
       await apiService.mealPlans.save(saveData);
       setSaved(true);
       
-      // Call parent onSave if provided
       if (onSave) {
         onSave(mealPlan);
       }
 
-      // Reset saved status after 3 seconds
       setTimeout(() => setSaved(false), 3000);
     } catch (error) {
       console.error('Error saving meal plan:', error);
       
-      // Handle specific authentication errors
       if (error.message.includes('401') || error.message.includes('Authentication error')) {
         setSaveError('Your session has expired. Please log in again.');
       } else {
@@ -347,7 +344,6 @@ function MealPlanResults({ mealPlan, onSave, compact = false, preferences = null
 
           {/* Action Buttons */}
           {user ? (
-            // Save Button for logged in users
             <button 
               className={`action-button save ${saved ? 'saved' : ''}`} 
               onClick={handleSavePlan}

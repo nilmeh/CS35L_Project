@@ -4,6 +4,7 @@ import { AuthProvider, useAuth } from './components/AuthProvider';
 import Dashboard from './pages/Dashboard';
 import PreferencesPage from './pages/PreferencesPage';
 import EditPlanPage from './pages/EditPlanPage';
+import MyPlansPage from './pages/MyPlansPage';
 import MenuPage from './pages/MenuPage';
 import LoginPage from './pages/LoginPage';
 import SignupPage from './pages/SignupPage';
@@ -66,7 +67,7 @@ function App() {
                     <Link to="/preferences" className="nav-link">Preferences</Link>
                   </li>
                   <li className="nav-item">
-                    <Link to="/edit-plan" className="nav-link">Edit Plan</Link>
+                    <Link to="/my-plans" className="nav-link">My Plans</Link>
                   </li>
                 </ul>
               </nav>
@@ -84,7 +85,13 @@ function App() {
                   <PreferencesPage />
                 </ProtectedRoute>
               } />
+              <Route path="/my-plans" element={
+                <ProtectedRoute>
+                  <MyPlansPage />
+                </ProtectedRoute>
+              } />
               <Route path="/edit-plan" element={<EditPlanPage />} />
+              <Route path="/edit-plan/:id" element={<EditPlanPage />} />
               <Route path="/login" element={<LoginPage />} />
               <Route path="/signup" element={<SignupPage />} />
             </Routes>

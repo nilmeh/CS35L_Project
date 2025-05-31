@@ -209,3 +209,27 @@ export const searchMenuItems = async (req, res) => {
     res.status(500).json({ message: 'Error searching menu items', error: error.message });
   }
 };
+
+export const getAvailableDates = async (req, res) => {
+  try {
+    // Get unique dates from the MenuItem collection
+    const dates = await MenuItem.distinct('date');
+    
+    // Format dates as YYYY-MM-DD strings
+    const formattedDates = dates
+      .map(date => {
+        const d = new Date(date);
+        return d.toISOString().split('T')[0];
+      })
+      .filter(date => date) // Remove any invalid dates
+      .sort();
+    
+    res.status(200).json({
+      dates: formattedDates,
+      count: formattedDates.length
+    });
+  } catch (error) {
+    console.error('Error fetching available dates:', error);
+    res.status(500).json({ message: 'Error fetching available dates', error: error.message });
+  }
+};
