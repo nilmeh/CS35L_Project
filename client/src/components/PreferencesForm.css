@@ -239,8 +239,8 @@
 }
 
 .generate-button:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 8px 25px rgba(74, 108, 250, 0.4);
+  transform: translateY(-4px); 
+  box-shadow: 0 10px 25px rgba(74, 108, 250, 0.3);
 }
 
 .generate-button:disabled {
