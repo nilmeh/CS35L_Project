@@ -8,6 +8,7 @@ import MenuPage from './pages/MenuPage';
 import LoginPage from './pages/LoginPage';
 import SignupPage from './pages/SignupPage';
 import ForgotPasswordPage from './pages/ForgotPasswordPage.jsx';
+import EditPlanPage from './pages/EditPlanPage';
 import './App.css';
 import Navbar from './components/Navbar';
 
@@ -55,6 +56,11 @@ function App() {
               <Route path="/my-plans" element={
                 <ProtectedRoute>
                   <MyPlansPage />
+                </ProtectedRoute>
+              } />
+              <Route path="/edit-plan/:id" element={
+                <ProtectedRoute>
+                  <EditPlanPage />
                 </ProtectedRoute>
               } />
               <Route path="/login" element={<LoginPage />} />
