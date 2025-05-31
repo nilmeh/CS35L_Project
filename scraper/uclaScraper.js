@@ -89,6 +89,25 @@ async function parseNutrition(driver) {
   return data;
 }
 
+// helper: get the calories
+async function parseCalories(driver) {
+  try {
+    const selector = By.css('p.single-calories');
+    await driver.wait(until.elementLocated(selector), 10_000);
+    let fullText = await driver.findElement(selector).getText();
+    
+    // More specific regex to extract just the number after "Calories"
+    const match = fullText.match(/Calories\s*(\d+)/i);
+    const calories = match ? parseInt(match[1], 10) : 0;
+    
+    console.log('Calories:', calories);
+    return calories;
+  } catch (error) {
+    console.warn('Could not parse calories:', error.message);
+    return 0; 
+  }
+}
+
 // helper: ingredients + allergens
 async function parseIngredientsAndAllergens(driver) {
   try {
@@ -216,12 +235,14 @@ const PERIODS = ['breakfast', 'lunch', 'dinner'];
               await driver.sleep(800);
 
               const name = await (await waitFor(driver, 'h2.single-name', 30_000)).getText();
+              const calories = await parseCalories(driver);
               const nutrition = await parseNutrition(driver);
               const { ingredients, allergens }  = await parseIngredientsAndAllergens(driver);
               const tags = await parseMetadataTags(driver);
+            
 
               results.push({
-                date: dateInfo.value || new Date().toISOString().split('T')[0], // Use current date if no value
+                date: dateInfo.value || new Date().toISOString().split('T')[0],
                 date_text: dateInfo.text,
                 dining_hall: hall,
                 meal_period: period,
@@ -231,6 +252,7 @@ const PERIODS = ['breakfast', 'lunch', 'dinner'];
                 ingredients,
                 allergens,
                 nutrition,
+                calories,
                 tags
               });
             } catch (err) {
