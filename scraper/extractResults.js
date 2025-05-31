@@ -25,6 +25,7 @@ function organizeResults() {
             const date = item.date || 'unknown';
             const dateText = item.date_text || date;
             const timePeriod = item.meal_period || 'unknown';
+            const calories = item.calories || 'unknown';
             const hall = item.dining_hall || 'unknown';
             const name = item.name || 'unknown';
             const ingredients = item.ingredients || [];
@@ -69,6 +70,7 @@ function organizeResults() {
                 "tags": tags,
                 "ingredients": ingredients, 
                 "allergens": allergens, 
+                "calories": calories,
                 "protein": protein, 
                 "fat": fat, 
                 "carbs": carbs, 
@@ -85,7 +87,7 @@ function organizeResults() {
 
 function writeResultsToFile(organizedData) {
   try {
-    const filePath = path.join(__dirname, 'organized_results.json');
+    const filePath = path.join(__dirname, '..', 'server', 'data', 'organized_results.json');
     fs.writeFileSync(filePath, JSON.stringify(organizedData, null, 2), 'utf8');
     console.log('Organized results written to organized_results.json');
     

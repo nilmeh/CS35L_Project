@@ -5,7 +5,7 @@ import './PreferencesForm.css';
 function PreferencesForm({ onSubmit, isLoading = false }) {
   const [availableDates, setAvailableDates] = useState([]);
   const [preferences, setPreferences] = useState({
-    targetCalories: 2000,
+    targetCalories: 1000,
     minProtein: 50,
     maxSugar: '',
     maxFat: '',

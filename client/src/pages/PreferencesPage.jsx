@@ -84,18 +84,8 @@ function PreferencesPage() {
   return (
     <div className="preferences-page">
       <div className="preferences-header">
-        <div className="header-content">
           <h2>Set Your Meal Preferences</h2>
           <p>Customize your nutritional goals and dietary preferences</p>
-        </div>
-        <div className="header-actions">
-          <button 
-            className="edit-plans-button"
-            onClick={() => navigate('/my-plans')}
-          >
-            📋 My Plans
-          </button>
-        </div>
       </div>
       
       <div className="preferences-container">

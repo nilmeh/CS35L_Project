@@ -189,16 +189,12 @@ function EditPlanPage() {
   const nutritionTotals = useMemo(() => {
     return mealPlan.items.reduce((acc, item) => {
       const servings = item.servings || 1;
-      const protein = (item.nutrition?.protein || 0) * servings;
-      const fat = (item.nutrition?.fat || 0) * servings;
-      const carbs = (item.nutrition?.carbs || 0) * servings;
-      const sugar = (item.nutrition?.sugar || 0) * servings;
       
-      // Calculate calories from macronutrients (protein: 4 cal/g, carbs: 4 cal/g, fat: 9 cal/g)
-      acc.calories += Math.round(protein * 4 + carbs * 4 + fat * 9);
-      acc.protein += protein;
-      acc.sugar += sugar;
-      acc.fat += fat;
+      // Access nutrition values directly from item properties
+      acc.calories += (item.calories || 0) * servings;
+      acc.protein += (item.protein || 0) * servings;
+      acc.sugar += (item.sugar || 0) * servings;
+      acc.fat += (item.fat || 0) * servings;
       return acc;
     }, { calories: 0, protein: 0, sugar: 0, fat: 0 });
   }, [mealPlan.items]);
@@ -252,7 +248,23 @@ function EditPlanPage() {
       updatedItems[existingItemIndex].servings = (updatedItems[existingItemIndex].servings || 1) + 1;
       setMealPlan(prev => ({ ...prev, items: updatedItems }));
     } else {
-      const newItem = { ...item, servings: 1 };
+      // Transform the item to match the meal plan schema
+      const newItem = {
+        ...item,
+        servings: 1,
+        // Flatten nutrition data if it exists under nutrition property
+        calories: item.calories || item.nutrition?.calories || 0,
+        protein: item.protein || item.nutrition?.protein || 0,
+        sugar: item.sugar || item.nutrition?.sugar || 0,
+        fat: item.fat || item.nutrition?.fat || 0,
+        carbs: item.carbs || item.nutrition?.carbs || 0,
+        fiber: item.fiber || item.nutrition?.fiber || 0,
+        sodium: item.sodium || item.nutrition?.sodium || 0,
+      };
+      
+      // Remove the nested nutrition object if it exists
+      delete newItem.nutrition;
+      
       setMealPlan(prev => ({ ...prev, items: [...prev.items, newItem] }));
     }
   };
@@ -471,7 +483,7 @@ function EditPlanPage() {
                           <h5>{item.name}</h5>
                           <p className="item-location">{item.station}</p>
                           <div className="item-nutrition">
-                            <span>{Math.round((item.nutrition?.protein || 0) * 4 + (item.nutrition?.carbs || 0) * 4 + (item.nutrition?.fat || 0) * 9)} cal</span>
+                            <span>{item.nutrition?.calories || 0} cal</span>
                             <span>{item.nutrition?.protein || 0}g protein</span>
                           </div>
                         </div>
@@ -583,8 +595,8 @@ function EditPlanPage() {
                       <h4>{item.name}</h4>
                       <p>{item.dining_hall} • {item.station}</p>
                       <div className="item-stats">
-                        {Math.round(((item.nutrition?.protein || 0) * 4 + (item.nutrition?.carbs || 0) * 4 + (item.nutrition?.fat || 0) * 9) * item.servings)} cal • 
-                        {Math.round((item.nutrition?.protein || 0) * item.servings)}g protein
+                        {Math.round((item.calories || 0) * item.servings)} cal • 
+                        {Math.round((item.protein || 0) * item.servings)}g protein
                       </div>
                     </div>
                     

@@ -10,6 +10,7 @@ const menuItemSchema = new mongoose.Schema({
   ingredients: { type: [String], default: [] },
   allergens: { type: [String], default: [] },
   nutrition: {
+    calories: {type: Number, default: 0},
     protein: { type: Number, default: 0 }, // in grams
     fat: { type: Number, default: 0 }, // in grams
     carbs: { type: Number, default: 0 }, // in grams  

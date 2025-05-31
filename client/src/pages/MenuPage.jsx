@@ -295,7 +295,7 @@ function MenuPage() {
                         <div className="nutrition-item">
                           <span className="nutrition-label">Calories:</span>
                           <span className="nutrition-value">
-                            {Math.round((item.nutrition?.fat || 0) * 9 + (item.nutrition?.protein || 0) * 4 + (item.nutrition?.carbs || 0) * 4)}
+                            {item.nutrition?.calories || 0}
                           </span>
                         </div>
                         <div className="nutrition-item">
@@ -343,7 +343,7 @@ function MenuPage() {
                   <div className="nutrition-detail">
                     <span className="label">Calories:</span>
                     <span className="value">
-                      {Math.round((selectedItem.nutrition?.fat || 0) * 9 + (selectedItem.nutrition?.protein || 0) * 4 + (selectedItem.nutrition?.carbs || 0) * 4)}
+                      {selectedItem.nutrition?.calories || 0}
                     </span>
                   </div>
                   <div className="nutrition-detail">
