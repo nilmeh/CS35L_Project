@@ -11,15 +11,28 @@ export const getAllMenuItems = async (req, res) => {
     
     // Add date filtering if provided
     if (date) {
-      // Parse the date and create a range for the entire day
-      const startDate = new Date(date);
-      const endDate = new Date(date);
-      endDate.setDate(endDate.getDate() + 1);
-      
-      filter.date = {
-        $gte: startDate,
-        $lt: endDate
-      };
+      // Handle YYYY-MM-DD format explicitly to avoid timezone issues
+      const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+      if (dateRegex.test(date)) {
+        // For YYYY-MM-DD format, create explicit UTC dates
+        const startDate = new Date(`${date}T00:00:00.000Z`);
+        const endDate = new Date(`${date}T23:59:59.999Z`);
+        
+        filter.date = {
+          $gte: startDate,
+          $lte: endDate
+        };
+      } else {
+        // Fallback to original logic for other date formats
+        const startDate = new Date(date);
+        const endDate = new Date(date);
+        endDate.setDate(endDate.getDate() + 1);
+        
+        filter.date = {
+          $gte: startDate,
+          $lt: endDate
+        };
+      }
     }
 
     const menuItems = await MenuItem.find(filter);

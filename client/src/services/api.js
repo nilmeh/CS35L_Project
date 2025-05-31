@@ -78,6 +78,7 @@ export const apiService = {
 
     // Get available dates
     getAvailableDates: async () => {
+
       const response = await api.get('/menu/dates');
       return response.data;
     },
