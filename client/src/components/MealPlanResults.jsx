@@ -15,7 +15,7 @@ function MealPlanResults({ mealPlan, onSave, compact = false, preferences = null
     return null;
   }
 
-  const { selectedItems, itemsByCategory, totals, warnings, message, variationInfo } = mealPlan;
+  const { selectedItems, itemsByCategory, totals, warnings, message, variationInfo, selectedDiningHall } = mealPlan;
 
   const getCategoryIcon = (category) => {
     const icons = {
@@ -119,6 +119,13 @@ function MealPlanResults({ mealPlan, onSave, compact = false, preferences = null
             {variationInfo && (
               <div className="variation-info">
                 <span className="variation-strategy">Strategy: {variationInfo.strategy}</span>
+              </div>
+            )}
+            {selectedDiningHall && (
+              <div className="dining-hall-info">
+                <span className="dining-hall-icon">🏛️</span>
+                <span className="dining-hall-label">Dining Hall:</span>
+                <span className="dining-hall-name">{selectedDiningHall}</span>
               </div>
             )}
           </div>
