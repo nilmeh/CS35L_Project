@@ -1,5 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
+import { auth } from '../services/firebase';
 import './LoginPage.css';
 
 function LoginPage() {
@@ -54,24 +56,26 @@ function LoginPage() {
     setLoading(true);
     
     try {
-      // Replace with actual API call/Firebase
-      console.log('Login attempt:', formData);
-      
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
-      navigate('/');
+      await signInWithEmailAndPassword(auth, formData.email, formData.password);
+      navigate('/preferences');
     } catch (error) {
-      console.error('Login error:', error);
-      setErrors({ general: 'Invalid email or password. Please try again.' });
+      setErrors({ general: error.message });
     } finally {
       setLoading(false);
     }
   };
 
-  const handleGoogleLogin = () => {
-    // Implement Google OAuth here
-    console.log('Google login clicked');
+  const handleGoogleLogin = async () => {
+    setLoading(true);
+    try {
+      const provider = new GoogleAuthProvider();
+      await signInWithPopup(auth, provider);
+      navigate('/preferences');
+    } catch (error) {
+      setErrors({ general: error.message });
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -201,4 +205,4 @@ function LoginPage() {
   );
 }
 
-export default LoginPage; 
+export default LoginPage;

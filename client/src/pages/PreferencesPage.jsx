@@ -1,11 +1,13 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../components/AuthProvider';
 import PreferencesForm from '../components/PreferencesForm';
 import MealPlanResults from '../components/MealPlanResults';
 import { apiService, handleApiError } from '../services/api';
 import './PreferencesPage.css';
 
 function PreferencesPage() {
+  const { user } = useAuth();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [mealPlans, setMealPlans] = useState([]); // Array to store multiple meal plans
@@ -13,22 +15,14 @@ function PreferencesPage() {
   const navigate = useNavigate();
   
   const handleSubmitPreferences = async (preferences, regenerationType = 'default', variationSeed = null) => {
-    console.log('🎯 PreferencesPage: Starting meal plan generation...');
-    console.log('📝 Form preferences received:', preferences);
-    console.log('🔄 Regeneration type:', regenerationType);
-    
     setLoading(true);
     setError(null);
     
-    // Store preferences for regeneration
     if (regenerationType === 'default') {
       setCurrentPreferences(preferences);
     }
     
     try {
-      console.log('⏳ PreferencesPage: Calling API service...');
-      
-      // Add regeneration parameters to the request
       const requestData = {
         ...preferences,
         regenerationType,
@@ -37,12 +31,8 @@ function PreferencesPage() {
       
       const response = await apiService.mealPlans.generate(requestData);
       
-      console.log('🎉 PreferencesPage: API call successful!');
-      console.log('📊 Meal plan response:', response);
-      
-      // Add the new meal plan to the array
       const newMealPlan = {
-        id: Date.now(), // Simple ID for tracking
+        id: Date.now(),
         mealPlan: response.mealPlan,
         preferences: preferences,
         variationInfo: response.mealPlan.variationInfo,
@@ -50,27 +40,16 @@ function PreferencesPage() {
       };
       
       if (regenerationType === 'default') {
-        // For new requests, replace all meal plans
         setMealPlans([newMealPlan]);
       } else {
-        // For regeneration, add to existing plans
         setMealPlans(prev => [...prev, newMealPlan]);
       }
       
       setLoading(false);
-      
-      console.log('✅ PreferencesPage: State updated successfully');
     } catch (error) {
-      console.error('💥 PreferencesPage: Error occurred:', error);
-      console.error('🔍 Error details:', {
-        name: error.name,
-        message: error.message,
-        stack: error.stack
-      });
+      console.error('Error generating meal plan:', error);
       
       const errorMessage = handleApiError(error);
-      console.log('📝 Processed error message:', errorMessage);
-      
       setError(errorMessage);
       setLoading(false);
     }
@@ -82,7 +61,6 @@ function PreferencesPage() {
       return;
     }
     
-    console.log('🔄 Regenerating meal plan with same preferences...');
     handleSubmitPreferences(currentPreferences, 'regenerate');
   };
   
@@ -94,10 +72,9 @@ function PreferencesPage() {
   
   const handleSavePlan = async (plan) => {
     try {
-      // For now, just show a success message
-      // Later this can be integrated with user authentication
+      // Use user.uid or user.email if needed for saving
       alert('Meal plan saved! (This feature will be fully implemented with user accounts)');
-      console.log('Saving meal plan:', plan);
+      console.log('Saving meal plan for user:', user?.email, plan);
     } catch (error) {
       console.error('Error saving meal plan:', error);
       alert('Error saving meal plan. Please try again.');
@@ -107,8 +84,8 @@ function PreferencesPage() {
   return (
     <div className="preferences-page">
       <div className="preferences-header">
-        <h2>Set Your Meal Preferences</h2>
-        <p>Customize your nutritional goals and dietary preferences</p>
+          <h2>Set Your Meal Preferences</h2>
+          <p>Customize your nutritional goals and dietary preferences</p>
       </div>
       
       <div className="preferences-container">
@@ -162,6 +139,7 @@ function PreferencesPage() {
                     mealPlan={planData.mealPlan} 
                     onSave={(plan) => handleSavePlan({...plan, optionId: planData.id})}
                     compact={mealPlans.length > 1}
+                    preferences={currentPreferences}
                   />
                 </div>
               ))}
@@ -210,4 +188,4 @@ function PreferencesPage() {
   );
 }
 
-export default PreferencesPage; 
+export default PreferencesPage;

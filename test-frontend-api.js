@@ -7,7 +7,7 @@ const testFrontendRequest = async () => {
   try {
     console.log('Testing frontend-style API request...');
     
-    // Simulate the exact request the frontend would make
+
     const preferences = {
       targetCalories: 2000,
       minProtein: 50,
@@ -30,7 +30,7 @@ const testFrontendRequest = async () => {
       },
     });
     
-    console.log('✅ SUCCESS!');
+    console.log('SUCCESS!');
     console.log('Response status:', response.status);
     console.log('Response data:', {
       message: response.data.message,

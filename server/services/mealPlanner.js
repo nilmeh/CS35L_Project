@@ -243,6 +243,12 @@ function containsAnimalProducts(ingredientsText) {
  * @returns {Array} Enhanced menu data with additional tags
  */
 function enhanceMenuData(menuData) {
+  // Safety check: return empty array if menuData is undefined or null
+  if (!menuData || !Array.isArray(menuData)) {
+    console.warn('⚠️ enhanceMenuData: menuData is not a valid array:', menuData);
+    return [];
+  }
+  
   return menuData.map(item => {
     // Convert Mongoose document to plain object
     const plainItem = item.toObject ? item.toObject() : item;
@@ -616,12 +622,12 @@ export function generateMealPlan(userPreferences, menuData) {
     // Apply variation strategy based on regenerationType and variationSeed
     const variationStrategy = getVariationStrategy(regenerationType, variationSeed);
 
-    // Score menu items based on nutritional value and estimated calories with variation
+
     const scored = filteredMenu.map(item => {
-        // Use existing calories if available, otherwise estimate from macros
-        let calories = item.calories || item.calculatedCalories;
+        let calories = item.nutrition?.calories || 0;
+        
+        // Only calculate if no calories are available in database
         if (!calories || calories === 0) {
-            // Estimate calories based on typical values for food items
             const protein = item.nutrition?.protein || 0;
             const fat = item.nutrition?.fat || 0;
             const carbs = item.nutrition?.carbs || 0;
@@ -629,7 +635,7 @@ export function generateMealPlan(userPreferences, menuData) {
             if (protein + fat + carbs > 0) {
                 calories = (protein * 4) + (fat * 9) + (carbs * 4);
             } else {
-                // Fallback: estimate based on food category and name
+
                 const category = item.category || detectFoodCategory(item.name, item.station);
                 if (category === "Dessert") calories = 250;
                 else if (category === "Main Course") calories = 350;

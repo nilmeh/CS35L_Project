@@ -1,0 +1,815 @@
+[
+  {
+    "date": "2025-05-29",
+    "date_text": "Yesterday, May 29",
+    "dining_hall": "Bruin Plate",
+    "meal_period": "breakfast",
+    "station": "Freshly Bowled",
+    "url": "https://dining.ucla.edu/menu-item/?recipe=881",
+    "name": "Tri-Tip, Red Potato, Egg, & Arugula Bowl",
+    "ingredients": [
+      "Scrambled Eggs: [ Egg Liquid (Eggs), Canola Oil ]",
+      "Grilled Tri-Tip: [ Beef Tri-Tip Halal, Extra Virgin Olive Oil Aerosol (Extra Virgin Olive Oil*. Also contains propellant to dispense spray. *Adds a trivial amount of fat.) ]",
+      "Baby Arugula",
+      "Potato Red Diced 1/2\"",
+      "Lemon Juice",
+      "Extra Virgin Olive Oil (Extra Virgin Olive Oil)",
+      "Olive Oil Blend (75 CANOLA OIL 25 EVOO)",
+      "SP Kosher Salt (SALT, YELLOW PRUSSIATE OF SODA)",
+      "SP Kosher Salt (SALT, YELLOW PRUSSIATE OF SODA)",
+      "SP Paprika Smoked (PAPRIKA, AND SILICON DIOXIDE (ADDED TO MAKE FREE FLOWING).)",
+      "Table Grind Black Pepper",
+      "Table Grind Black Pepper",
+      "Fresh Rosemary"
+    ],
+    "allergens": [
+      "Eggs"
+    ],
+    "nutrition": {
+      "Total Fat": {
+        "amount": "8.2g",
+        "dv": "11%"
+      },
+      "Saturated Fat": {
+        "amount": "2.3g",
+        "dv": "11%"
+      },
+      "Trans Fat": {
+        "amount": "0g",
+        "dv": null
+      },
+      "Cholesterol": {
+        "amount": "190.5mg",
+        "dv": "64%"
+      },
+      "Sodium": {
+        "amount": "134.1mg",
+        "dv": "6%"
+      },
+      "Total Carbohydrate": {
+        "amount": "3.6g",
+        "dv": "1%"
+      },
+      "Dietary Fiber": {
+        "amount": "0.5g",
+        "dv": "2%"
+      },
+      "Sugars": {
+        "amount": "0.6g",
+        "dv": null
+      },
+      "Includes Added Sugars": {
+        "amount": "0g",
+        "dv": "0%"
+      },
+      "Protein": {
+        "amount": "11.3g",
+        "dv": "23%"
+      },
+      "Calcium": {
+        "amount": "54.5mg",
+        "dv": "4%"
+      },
+      "Iron": {
+        "amount": "1.5mg",
+        "dv": "8%"
+      },
+      "Potassium": {
+        "amount": "254.2mg",
+        "dv": "5%"
+      },
+      "Vitamin D": {
+        "amount": "1.2µg",
+        "dv": "6%"
+      }
+    },
+    "calories": 174,
+    "tags": [
+      "High-Carbon-Footprint",
+      "Contains Eggs"
+    ]
+  },
+  {
+    "date": "2025-05-29",
+    "date_text": "Yesterday, May 29",
+    "dining_hall": "Bruin Plate",
+    "meal_period": "breakfast",
+    "station": "Harvest",
+    "url": "https://dining.ucla.edu/menu-item/?recipe=2170",
+    "name": "Mushroom Beef Ragout Bowl w/ Poached Egg",
+    "ingredients": [
+      "Roasted Portobello Mushrooms: [ Mushroom Portobello 3\"- 4\", Olive Oil Blend (75 CANOLA OIL 25 EVOO), Garlic Clove Peeled ]",
+      "Fried Eggs: [ Egg Shell Large Grade A (Eggs), Olive Oil Blend (75 CANOLA OIL 25 EVOO) ]",
+      "Farro: [ Grain Farro (FARRO. CONTAINS: WHEAT) (Gluten, Wheat), Water, Yellow Onion Diced 1\", Carrots Diced 1/2\", Tomato Diced 1/2\", Celery Bias Cut, Garlic Clove Peeled, Parsley Italian, SP Peppercorns Melange 4-Color, SP Kosher Salt (SALT, YELLOW PRUSSIATE OF SODA), Herb Thyme Fresh, SP Bay Leaf Dry Whole ]",
+      "Black Lentils: [ Legume Black Lentils, Water, SP Kosher Salt (SALT, YELLOW PRUSSIATE OF SODA) ]",
+      "Ground Beef Lean 95%",
+      "Balsamic Vinegar (Balsamic Vinegar, Sulfur Dioxide)",
+      "Yellow Onion Diced 1/4\"",
+      "Honey Strained Light Amber",
+      "SP Kosher Salt (SALT, YELLOW PRUSSIATE OF SODA)",
+      "Garlic Clove Peeled",
+      "Olive Oil Blend (75 CANOLA OIL 25 EVOO)",
+      "SP Granulated Sugar (Sugar)",
+      "SP Paprika Smoked (PAPRIKA, AND SILICON DIOXIDE (ADDED TO MAKE FREE FLOWING).)",
+      "SP Paprika Smoked (PAPRIKA, AND SILICON DIOXIDE (ADDED TO MAKE FREE FLOWING).)",
+      "SP Pepper Red Chili Crushed"
+    ],
+    "allergens": [
+      "Gluten",
+      "Wheat",
+      "Eggs"
+    ],
+    "nutrition": {
+      "Total Fat": {
+        "amount": "10.1g",
+        "dv": "13%"
+      },
+      "Saturated Fat": {
+        "amount": "1.7g",
+        "dv": "9%"
+      },
+      "Trans Fat": {
+        "amount": "0g",
+        "dv": null
+      },
+      "Cholesterol": {
+        "amount": "138.4mg",
+        "dv": "46%"
+      },
+      "Sodium": {
+        "amount": "207.2mg",
+        "dv": "9%"
+      },
+      "Total Carbohydrate": {
+        "amount": "6.9g",
+        "dv": "3%"
+      },
+      "Dietary Fiber": {
+        "amount": "1g",
+        "dv": "4%"
+      },
+      "Sugars": {
+        "amount": "3.1g",
+        "dv": null
+      },
+      "Includes Added Sugars": {
+        "amount": "0.2g",
+        "dv": "0%"
+      },
+      "Protein": {
+        "amount": "7.3g",
+        "dv": "15%"
+      },
+      "Calcium": {
+        "amount": "24.7mg",
+        "dv": "2%"
+      },
+      "Iron": {
+        "amount": "1.1mg",
+        "dv": "6%"
+      },
+      "Potassium": {
+        "amount": "234.4mg",
+        "dv": "5%"
+      },
+      "Vitamin D": {
+        "amount": "0.8µg",
+        "dv": "4%"
+      }
+    },
+    "calories": 205,
+    "tags": [
+      "High-Carbon-Footprint",
+      "Contains Gluten",
+      "Contains Wheat",
+      "Contains Eggs"
+    ]
+  },
+  {
+    "date": "2025-05-29",
+    "date_text": "Yesterday, May 29",
+    "dining_hall": "Bruin Plate",
+    "meal_period": "breakfast",
+    "station": "Harvest",
+    "url": "https://dining.ucla.edu/menu-item/?recipe=506",
+    "name": "Scrambled Eggs",
+    "ingredients": [
+      "Egg Liquid (Eggs)",
+      "Canola Oil"
+    ],
+    "allergens": [
+      "Eggs"
+    ],
+    "nutrition": {
+      "Total Fat": {
+        "amount": "12.3g",
+        "dv": "16%"
+      },
+      "Saturated Fat": {
+        "amount": "3.5g",
+        "dv": "17%"
+      },
+      "Trans Fat": {
+        "amount": "0.1g",
+        "dv": null
+      },
+      "Cholesterol": {
+        "amount": "362.2mg",
+        "dv": "121%"
+      },
+      "Sodium": {
+        "amount": "124.6mg",
+        "dv": "5%"
+      },
+      "Total Carbohydrate": {
+        "amount": "1g",
+        "dv": "0%"
+      },
+      "Dietary Fiber": {
+        "amount": "0g",
+        "dv": "0%"
+      },
+      "Sugars": {
+        "amount": "0.2g",
+        "dv": null
+      },
+      "Includes Added Sugars": {
+        "amount": "0g",
+        "dv": "0%"
+      },
+      "Protein": {
+        "amount": "12g",
+        "dv": "24%"
+      },
+      "Calcium": {
+        "amount": "60.4mg",
+        "dv": "5%"
+      },
+      "Iron": {
+        "amount": "1.7mg",
+        "dv": "9%"
+      },
+      "Potassium": {
+        "amount": "131.5mg",
+        "dv": "3%"
+      },
+      "Vitamin D": {
+        "amount": "2.5µg",
+        "dv": "13%"
+      }
+    },
+    "calories": 156,
+    "tags": [
+      "Vegetarian",
+      "Low-Carbon-Footprint",
+      "Contains Eggs"
+    ]
+  },
+  {
+    "date": "2025-05-29",
+    "date_text": "Yesterday, May 29",
+    "dining_hall": "Bruin Plate",
+    "meal_period": "lunch",
+    "station": "Soups",
+    "url": "https://dining.ucla.edu/menu-item/?recipe=766",
+    "name": "Tomato & Fresh Basil Soup",
+    "ingredients": [
+      "Tomato Crushed VOL PK (Vine-Ripened Tomatoes, Tomato Puree, Salt, Citric Acid, Calcium Chloride)",
+      "Water",
+      "Yellow Onion Diced 1/4\"",
+      "Canola Oil",
+      "Garlic Chopped (GARLIC, WATER, PHOSPHORIC ACID, SODIUM BENZOATE, POTASSIUM SORBATE (PRESERVATIVES). CONTAINS: NATURALLY OCCURRING SULFITES.)",
+      "SP Kosher Salt (SALT, YELLOW PRUSSIATE OF SODA)",
+      "Herb Basil Fresh",
+      "Table Grind Black Pepper",
+      "Herb Basil Fresh",
+      "SP Kosher Salt (SALT, YELLOW PRUSSIATE OF SODA)"
+    ],
+    "allergens": [
+      "None"
+    ],
+    "nutrition": {
+      "Total Fat": {
+        "amount": "0.6g",
+        "dv": "1%"
+      },
+      "Saturated Fat": {
+        "amount": "0.1g",
+        "dv": "0%"
+      },
+      "Trans Fat": {
+        "amount": "0g",
+        "dv": null
+      },
+      "Cholesterol": {
+        "amount": "0mg",
+        "dv": "0%"
+      },
+      "Sodium": {
+        "amount": "249.7mg",
+        "dv": "11%"
+      },
+      "Total Carbohydrate": {
+        "amount": "4.8g",
+        "dv": "2%"
+      },
+      "Dietary Fiber": {
+        "amount": "1.3g",
+        "dv": "5%"
+      },
+      "Sugars": {
+        "amount": "2g",
+        "dv": null
+      },
+      "Includes Added Sugars": {
+        "amount": "0g",
+        "dv": "0%"
+      },
+      "Protein": {
+        "amount": "0.7g",
+        "dv": "1%"
+      },
+      "Calcium": {
+        "amount": "4.2mg",
+        "dv": "0%"
+      },
+      "Iron": {
+        "amount": "0.1mg",
+        "dv": "0%"
+      },
+      "Potassium": {
+        "amount": "195mg",
+        "dv": "4%"
+      },
+      "Vitamin D": {
+        "amount": "0µg",
+        "dv": "0%"
+      }
+    },
+    "calories": 51,
+    "tags": [
+      "Vegan",
+      "Low-Carbon-Footprint"
+    ]
+  },
+  {
+    "date": "2025-05-29",
+    "date_text": "Yesterday, May 29",
+    "dining_hall": "Bruin Plate",
+    "meal_period": "lunch",
+    "station": "Soups",
+    "url": "https://dining.ucla.edu/menu-item/?recipe=6189",
+    "name": "Soup Special",
+    "ingredients": [
+      "Custom Recipe Ingredients (This is a custom recipe. Contact management and chef on duty to verify ingredient and nutritional information. Allergen information not verified by dietician.) (Fish,Soy,Crustacean-Shellfish,Gluten,Peanut,Tree-Nuts,Wheat,Sesame,Dairy,Eggs,Alcohol)"
+    ],
+    "allergens": [
+      "Fish",
+      "Soy",
+      "Crustacean-Shellfish",
+      "Gluten",
+      "Peanut",
+      "Tree-Nuts",
+      "Wheat",
+      "Sesame",
+      "Dairy",
+      "Eggs",
+      "Alcohol"
+    ],
+    "nutrition": {
+      "Total Fat": {
+        "amount": "0g",
+        "dv": "0%"
+      },
+      "Saturated Fat": {
+        "amount": "0g",
+        "dv": "0%"
+      },
+      "Trans Fat": {
+        "amount": "0g",
+        "dv": null
+      },
+      "Cholesterol": {
+        "amount": "0mg",
+        "dv": "0%"
+      },
+      "Sodium": {
+        "amount": "0mg",
+        "dv": "0%"
+      },
+      "Total Carbohydrate": {
+        "amount": "0g",
+        "dv": "0%"
+      },
+      "Dietary Fiber": {
+        "amount": "0g",
+        "dv": "0%"
+      },
+      "Sugars": {
+        "amount": "0g",
+        "dv": null
+      },
+      "Includes Added Sugars": {
+        "amount": "0g",
+        "dv": "0%"
+      },
+      "Protein": {
+        "amount": "0g",
+        "dv": "0%"
+      },
+      "Calcium": {
+        "amount": "0mg",
+        "dv": "0%"
+      },
+      "Iron": {
+        "amount": "0mg",
+        "dv": "0%"
+      },
+      "Potassium": {
+        "amount": "0mg",
+        "dv": "0%"
+      },
+      "Vitamin D": {
+        "amount": "0µg",
+        "dv": "0%"
+      }
+    },
+    "calories": 0,
+    "tags": [
+      "Contains Fish",
+      "Contains Soy",
+      "Contains Crustacean-Shellfish",
+      "Contains Gluten",
+      "Contains Peanut",
+      "Contains Tree-Nuts",
+      "Contains Wheat",
+      "Contains Sesame",
+      "Contains Dairy",
+      "Contains Eggs",
+      "Contains Alcohol"
+    ]
+  },
+  {
+    "date": "2025-05-29",
+    "date_text": "Yesterday, May 29",
+    "dining_hall": "Bruin Plate",
+    "meal_period": "lunch",
+    "station": "Freshly Bowled",
+    "url": "https://dining.ucla.edu/menu-item/?recipe=3512",
+    "name": "Chicken, Toasted Quinoa, & Garlic Vegetable Bowl",
+    "ingredients": [
+      "Squash Yellow",
+      "Green Beans Trimmed",
+      "Chicken Thigh 4oz B/S",
+      "Kale Chopped",
+      "Red Quinoa: [ Water, Red Quinoa, Yellow Onion Diced 1\", Carrots Diced 1/2\", Tomato Diced 1/2\", Celery Bias Cut, Garlic Clove Peeled, Parsley Italian, SP Peppercorns Melange 4-Color, SP Kosher Salt (SALT, YELLOW PRUSSIATE OF SODA), Herb Thyme Fresh, SP Bay Leaf Dry Whole ]",
+      "Yellow Onion Diced 1/4\"",
+      "Garlic Herb Spread: [ Garlic Clove Peeled, Extra Virgin Olive Oil (Extra Virgin Olive Oil), Lemon Juice, Herb Basil Fresh, SP Kosher Salt (SALT, YELLOW PRUSSIATE OF SODA), Olive Oil Blend (75 CANOLA OIL 25 EVOO), Fresh Oregano, Table Grind Black Pepper ]",
+      "Olive Oil Blend (75 CANOLA OIL 25 EVOO)",
+      "Garlic Clove Peeled"
+    ],
+    "allergens": [
+      "None"
+    ],
+    "nutrition": {
+      "Total Fat": {
+        "amount": "3.1g",
+        "dv": "4%"
+      },
+      "Saturated Fat": {
+        "amount": "0.5g",
+        "dv": "2%"
+      },
+      "Trans Fat": {
+        "amount": "0g",
+        "dv": null
+      },
+      "Cholesterol": {
+        "amount": "17.3mg",
+        "dv": "6%"
+      },
+      "Sodium": {
+        "amount": "40.4mg",
+        "dv": "2%"
+      },
+      "Total Carbohydrate": {
+        "amount": "7.5g",
+        "dv": "3%"
+      },
+      "Dietary Fiber": {
+        "amount": "1.8g",
+        "dv": "6%"
+      },
+      "Sugars": {
+        "amount": "1.4g",
+        "dv": null
+      },
+      "Includes Added Sugars": {
+        "amount": "0g",
+        "dv": "0%"
+      },
+      "Protein": {
+        "amount": "6g",
+        "dv": "12%"
+      },
+      "Calcium": {
+        "amount": "40.8mg",
+        "dv": "3%"
+      },
+      "Iron": {
+        "amount": "1mg",
+        "dv": "6%"
+      },
+      "Potassium": {
+        "amount": "312.1mg",
+        "dv": "7%"
+      },
+      "Vitamin D": {
+        "amount": "0µg",
+        "dv": "0%"
+      }
+    },
+    "calories": 109,
+    "tags": []
+  },
+  {
+    "date": "2025-05-29",
+    "date_text": "Yesterday, May 29",
+    "dining_hall": "Bruin Plate",
+    "meal_period": "dinner",
+    "station": "Soups",
+    "url": "https://dining.ucla.edu/menu-item/?recipe=130",
+    "name": "Seafood, Leek & Tomato Chowder",
+    "ingredients": [
+      "Clam Broth: [ Water, Clam Base (COOKED CLAMS WITH CLAM JUICE AND CLAM EXTRACT, SALT, BUTTER OIL, HYDROLYZED CORN PROTEIN, MALTODEXTRIN, YEAST EXTRACT, SUGAR, ONION POWDER, DEHYDRATED POTATO FLAKES, NATURAL FLAVOR [WITH TORULA YEAST, GUM ARABIC, CITRIC ACID]. CONTAINS: MILK.) (Dairy) ]",
+      "Water",
+      "Potato Diced 3/8\"",
+      "Cod Fillet Plain (Fish)",
+      "White Shrimp (Crustacean-Shellfish)",
+      "Squid",
+      "Wine Chablis (WHITE WINE, SALT, MALIC ACID, CARAMEL COLOR, POTASSIUM METABISULFITE (PRESERVATIVE), POTASSIUM SORBATE (PRESERVATIVE).) (Alcohol)",
+      "Leeks",
+      "Parsley Sprig",
+      "Canola Oil",
+      "SP Sea Salt",
+      "SP Pepper Red Chili Crushed",
+      "SP Coriander Ground (GROUND CORIANDER)",
+      "SP Bay Leaf Dry Whole",
+      "Anise Seed"
+    ],
+    "allergens": [
+      "Fish",
+      "Crustacean-Shellfish",
+      "Dairy",
+      "Alcohol"
+    ],
+    "nutrition": {
+      "Total Fat": {
+        "amount": "0.5g",
+        "dv": "1%"
+      },
+      "Saturated Fat": {
+        "amount": "0.1g",
+        "dv": "0%"
+      },
+      "Trans Fat": {
+        "amount": "0g",
+        "dv": null
+      },
+      "Cholesterol": {
+        "amount": "33.5mg",
+        "dv": "11%"
+      },
+      "Sodium": {
+        "amount": "259.4mg",
+        "dv": "11%"
+      },
+      "Total Carbohydrate": {
+        "amount": "2.9g",
+        "dv": "1%"
+      },
+      "Dietary Fiber": {
+        "amount": "0.4g",
+        "dv": "1%"
+      },
+      "Sugars": {
+        "amount": "0.2g",
+        "dv": null
+      },
+      "Includes Added Sugars": {
+        "amount": "0g",
+        "dv": "0%"
+      },
+      "Protein": {
+        "amount": "5g",
+        "dv": "10%"
+      },
+      "Calcium": {
+        "amount": "14.1mg",
+        "dv": "1%"
+      },
+      "Iron": {
+        "amount": "0.2mg",
+        "dv": "1%"
+      },
+      "Potassium": {
+        "amount": "123.5mg",
+        "dv": "3%"
+      },
+      "Vitamin D": {
+        "amount": "0.1µg",
+        "dv": "1%"
+      }
+    },
+    "calories": 63,
+    "tags": [
+      "Contains Fish",
+      "Contains Crustacean-Shellfish",
+      "Contains Dairy",
+      "Contains Alcohol"
+    ]
+  },
+  {
+    "date": "2025-05-29",
+    "date_text": "Yesterday, May 29",
+    "dining_hall": "Bruin Plate",
+    "meal_period": "dinner",
+    "station": "Soups",
+    "url": "https://dining.ucla.edu/menu-item/?recipe=127",
+    "name": "Potato Leek Soup",
+    "ingredients": [
+      "Potato Diced 1/4\"",
+      "Roasted Vegetable Stock: [ Water, Yellow Onion Diced 1\", Carrots Diced 1/2\", Tomato Diced 1/2\", Celery Bias Cut, Garlic Clove Peeled, Parsley Italian, SP Peppercorns Melange 4-Color, SP Kosher Salt (SALT, YELLOW PRUSSIATE OF SODA), Herb Thyme Fresh, SP Bay Leaf Dry Whole ]",
+      "Celery Diced",
+      "Yellow Onion Diced 3/8\"",
+      "Leeks",
+      "Unsalted Butter (Dairy)",
+      "Garlic Clove Peeled",
+      "SP Kosher Salt (SALT, YELLOW PRUSSIATE OF SODA)",
+      "Ground SP White Pepper"
+    ],
+    "allergens": [
+      "Dairy"
+    ],
+    "nutrition": {
+      "Total Fat": {
+        "amount": "0.9g",
+        "dv": "1%"
+      },
+      "Saturated Fat": {
+        "amount": "0.6g",
+        "dv": "3%"
+      },
+      "Trans Fat": {
+        "amount": "0g",
+        "dv": null
+      },
+      "Cholesterol": {
+        "amount": "2.2mg",
+        "dv": "1%"
+      },
+      "Sodium": {
+        "amount": "39.7mg",
+        "dv": "2%"
+      },
+      "Total Carbohydrate": {
+        "amount": "10.3g",
+        "dv": "4%"
+      },
+      "Dietary Fiber": {
+        "amount": "1.7g",
+        "dv": "6%"
+      },
+      "Sugars": {
+        "amount": "1.4g",
+        "dv": null
+      },
+      "Includes Added Sugars": {
+        "amount": "0g",
+        "dv": "0%"
+      },
+      "Protein": {
+        "amount": "1.2g",
+        "dv": "2%"
+      },
+      "Calcium": {
+        "amount": "14.7mg",
+        "dv": "1%"
+      },
+      "Iron": {
+        "amount": "0.4mg",
+        "dv": "2%"
+      },
+      "Potassium": {
+        "amount": "261.6mg",
+        "dv": "6%"
+      },
+      "Vitamin D": {
+        "amount": "0µg",
+        "dv": "0%"
+      }
+    },
+    "calories": 91,
+    "tags": [
+      "Vegetarian",
+      "Contains Dairy"
+    ]
+  },
+  {
+    "date": "2025-05-29",
+    "date_text": "Yesterday, May 29",
+    "dining_hall": "Bruin Plate",
+    "meal_period": "dinner",
+    "station": "Soups",
+    "url": "https://dining.ucla.edu/menu-item/?recipe=6189",
+    "name": "Soup Special",
+    "ingredients": [
+      "Custom Recipe Ingredients (This is a custom recipe. Contact management and chef on duty to verify ingredient and nutritional information. Allergen information not verified by dietician.) (Fish,Soy,Crustacean-Shellfish,Gluten,Peanut,Tree-Nuts,Wheat,Sesame,Dairy,Eggs,Alcohol)"
+    ],
+    "allergens": [
+      "Fish",
+      "Soy",
+      "Crustacean-Shellfish",
+      "Gluten",
+      "Peanut",
+      "Tree-Nuts",
+      "Wheat",
+      "Sesame",
+      "Dairy",
+      "Eggs",
+      "Alcohol"
+    ],
+    "nutrition": {
+      "Total Fat": {
+        "amount": "0g",
+        "dv": "0%"
+      },
+      "Saturated Fat": {
+        "amount": "0g",
+        "dv": "0%"
+      },
+      "Trans Fat": {
+        "amount": "0g",
+        "dv": null
+      },
+      "Cholesterol": {
+        "amount": "0mg",
+        "dv": "0%"
+      },
+      "Sodium": {
+        "amount": "0mg",
+        "dv": "0%"
+      },
+      "Total Carbohydrate": {
+        "amount": "0g",
+        "dv": "0%"
+      },
+      "Dietary Fiber": {
+        "amount": "0g",
+        "dv": "0%"
+      },
+      "Sugars": {
+        "amount": "0g",
+        "dv": null
+      },
+      "Includes Added Sugars": {
+        "amount": "0g",
+        "dv": "0%"
+      },
+      "Protein": {
+        "amount": "0g",
+        "dv": "0%"
+      },
+      "Calcium": {
+        "amount": "0mg",
+        "dv": "0%"
+      },
+      "Iron": {
+        "amount": "0mg",
+        "dv": "0%"
+      },
+      "Potassium": {
+        "amount": "0mg",
+        "dv": "0%"
+      },
+      "Vitamin D": {
+        "amount": "0µg",
+        "dv": "0%"
+      }
+    },
+    "calories": 0,
+    "tags": [
+      "Contains Fish",
+      "Contains Soy",
+      "Contains Crustacean-Shellfish",
+      "Contains Gluten",
+      "Contains Peanut",
+      "Contains Tree-Nuts",
+      "Contains Wheat",
+      "Contains Sesame",
+      "Contains Dairy",
+      "Contains Eggs",
+      "Contains Alcohol"
+    ]
+  }
+]
