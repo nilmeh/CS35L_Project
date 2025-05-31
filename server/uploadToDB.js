@@ -1,10 +1,10 @@
 import mongoose from 'mongoose';
 import fs from 'fs/promises';
 import path from 'path';
-import MenuItem from './models/MenuItem.js';  // Adjust relative path if needed
+import MenuItem from './models/MenuItem.js';
 import dotenv from 'dotenv';
 
-dotenv.config();
+dotenv.config({path : '../.env'});
 
 const MONGO_URI = process.env.MONGO_URI;
 
@@ -33,11 +33,11 @@ function transformRawData(raw) {
             meal_period,
             name: entry.name || '',
             station: entry.station || '',
-            calories: entry.calories || '',
             tags: entry.tags || [],
             ingredients: entry.ingredients || [],
             allergens: entry.allergens || [],
             nutrition: {
+              calories: parseNutrition(entry.calories),
               protein: parseNutrition(entry.protein),
               fat: parseNutrition(entry.fat),
               carbs: parseNutrition(entry.carbs),
