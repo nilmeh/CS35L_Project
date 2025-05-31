@@ -3,12 +3,13 @@ import { useState, useEffect } from 'react';
 import { AuthProvider, useAuth } from './components/AuthProvider';
 import Dashboard from './pages/Dashboard';
 import PreferencesPage from './pages/PreferencesPage';
-import EditPlanPage from './pages/EditPlanPage';
 import MyPlansPage from './pages/MyPlansPage';
 import MenuPage from './pages/MenuPage';
 import LoginPage from './pages/LoginPage';
 import SignupPage from './pages/SignupPage';
+import ForgotPasswordPage from './pages/ForgotPasswordPage.jsx';
 import './App.css';
+import Navbar from './components/Navbar';
 
 function ProtectedRoute({ children }) {
   const { user, loading } = useAuth();
@@ -38,41 +39,7 @@ function App() {
     <AuthProvider>
       <div className="app">
         <header className="header">
-          <div className="container">
-            <div className="header-content">
-              <div className="logo">
-                <h1>UCLA Dining</h1>
-                <span className="logo-tag">Meal Planner</span>
-              </div>
-              
-              <button 
-                className="mobile-menu-btn"
-                onClick={() => setIsMenuOpen(!isMenuOpen)}
-                aria-label="Toggle menu"
-              >
-                <span></span>
-                <span></span>
-                <span></span>
-              </button>
-              
-              <nav className={`nav ${isMenuOpen ? 'nav-open' : ''}`}>
-                <ul className="nav-list">
-                  <li className="nav-item">
-                    <Link to="/" className="nav-link">Dashboard</Link>
-                  </li>
-                  <li className="nav-item">
-                    <Link to="/menu" className="nav-link">Menu</Link>
-                  </li>
-                  <li className="nav-item">
-                    <Link to="/preferences" className="nav-link">Preferences</Link>
-                  </li>
-                  <li className="nav-item">
-                    <Link to="/my-plans" className="nav-link">My Plans</Link>
-                  </li>
-                </ul>
-              </nav>
-            </div>
-          </div>
+          <Navbar />
         </header>
         
         <main className="main">
@@ -90,10 +57,9 @@ function App() {
                   <MyPlansPage />
                 </ProtectedRoute>
               } />
-              <Route path="/edit-plan" element={<EditPlanPage />} />
-              <Route path="/edit-plan/:id" element={<EditPlanPage />} />
               <Route path="/login" element={<LoginPage />} />
               <Route path="/signup" element={<SignupPage />} />
+              <Route path="/forgot-password" element={<ForgotPasswordPage />} />
             </Routes>
           </div>
         </main>
@@ -102,11 +68,6 @@ function App() {
           <div className="container">
             <div className="footer-content">
               <p>&copy; {new Date().getFullYear()} UCLA Dining Meal Planner</p>
-              <div className="footer-links">
-                <Link to="/privacy" className="footer-link">Privacy Policy</Link>
-                <Link to="/terms" className="footer-link">Terms of Service</Link>
-                <Link to="/contact" className="footer-link">Contact</Link>
-              </div>
             </div>
           </div>
         </footer>
