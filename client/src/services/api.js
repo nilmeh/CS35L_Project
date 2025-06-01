@@ -1,12 +1,11 @@
 import axios from 'axios';
-import { auth } from './firebase';
+import { auth } from './firebase'; 
 
-// Base URL for the backend API
-const API_BASE_URL = 'http://localhost:3001/api';
 
-// Create axios instance with default config
+const API_BASE_URL = `${import.meta.env.VITE_API_BASE_URL}/api`; 
+
 const api = axios.create({
-  baseURL: API_BASE_URL,
+  baseURL: API_BASE_URL, 
   headers: {
     'Content-Type': 'application/json',
   },
