@@ -5,7 +5,7 @@ import dotenv from "dotenv";
 import menuRoutes from "./routes/menuRoutes.js";
 import mealPlanRoutes from "./routes/mealPlanRoutes.js";
 
-dotenv.config({ path: '../.env' });
+dotenv.config();
 
 const app = express();
 
