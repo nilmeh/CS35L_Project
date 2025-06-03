@@ -37,16 +37,6 @@
   color: white;
 }
 
-.navbar-brand a::before {
-  content: '';
-  display: block;
-  width: 28px;
-  height: 28px;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23FFFFFF'%3E%3Cpath d='M11.625 16.5a1.875 1.875 0 1 0 0-3.75 1.875 1.875 0 0 0 0 3.75Z'%3E%3C/path%3E%3Cpath d='M12.75 3.03v.414H5.5a1 1 0 0 0-1 1v16a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1v-8.036h.414a.75.75 0 0 0 .75-.75V3.78a.75.75 0 0 0-.75-.75H12.75Z'%3E%3C/path%3E%3C/svg%3E");
-  background-size: contain;
-  background-repeat: no-repeat;
-}
-
 .navbar-brand h1 {
   font-size: 1.35rem;
   margin: 0;
@@ -113,4 +103,4 @@
     padding: 6px 12px;
     font-size: 0.85rem;
   }
-} 
+}

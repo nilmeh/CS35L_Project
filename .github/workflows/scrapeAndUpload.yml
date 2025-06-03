@@ -2,8 +2,8 @@ name: Weekly Scraper
 
 on:
   schedule:
-    - cron: '0 7 * * 0'  # Every Sunday at 12 AM PT (7 AM UTC)
-  workflow_dispatch:     # Manual trigger
+    - cron: '0 7 * * 0'  # Every Sunday midnight LA time (7 AM UTC)
+  workflow_dispatch:
 
 jobs:
   run-scraper-upload:
@@ -18,15 +18,19 @@ jobs:
         with:
           node-version: '22'
 
+      - name: Install scraper dependencies
+        working-directory: ./scraper
+        run: npm install
+
+      - name: Run scraper script
+        run: node scraper/uclaScraper.js
+
+      - name: Run extract results script
+        run: node scraper/extractResults.js
+
       - name: Install server dependencies
         working-directory: ./server
         run: npm install
-
-      - name: Run uclaScraper script
-        run: node scraper/uclaScraper.js
-
-      - name: Run extractResults script
-        run: node scraper/extractResults.js
 
       - name: Upload JSON to DB
         working-directory: ./server
