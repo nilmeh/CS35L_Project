@@ -22,11 +22,10 @@ jobs:
         working-directory: ./scraper
         run: npm install
 
-      - name: Run scraper script
-        run: node scraper/uclaScraper.js
-
-      - name: Run extract results script
-        run: node scraper/extractResults.js
+      - name: Run scraper scripts
+        run: |
+          node scraper/uclaScraper.js
+          node scraper/extractResults.js
 
       - name: Install server dependencies
         working-directory: ./server
