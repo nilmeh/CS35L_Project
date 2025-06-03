@@ -35,4 +35,4 @@ jobs:
         working-directory: ./server
         env:
           MONGO_URI: ${{ secrets.MONGO_URI }}
-        run: node uploadToDb.js
+        run: node uploadToDB.js
