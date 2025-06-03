@@ -4,7 +4,7 @@ import path from 'path';
 import MenuItem from './models/MenuItem.js';
 import dotenv from 'dotenv';
 
-dotenv.config({path : '../.env'});
+dotenv.config();
 
 const MONGO_URI = process.env.MONGO_URI;
 
