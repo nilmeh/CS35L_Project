@@ -2,6 +2,14 @@ import { useState, useEffect } from 'react';
 import { DINING_HALLS, MEAL_PERIODS, apiService } from '../services/api';
 import './PreferencesForm.css';
 
+const getTodayDateString = () => {
+  const today = new Date();
+  const year = today.getFullYear();
+  const month = String(today.getMonth() + 1).padStart(2, '0');
+  const day = String(today.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
 function PreferencesForm({ onSubmit, isLoading = false }) {
   const [availableDates, setAvailableDates] = useState([]);
   const [preferences, setPreferences] = useState({
@@ -19,9 +27,8 @@ function PreferencesForm({ onSubmit, isLoading = false }) {
     excludedCategories: [],
     diningHall: "",
     mealTime: "lunch",
-    date: ""
+    date: getTodayDateString() 
   });
-
 
   const [tagInputs, setTagInputs] = useState({
     allowedTags: '',
@@ -36,7 +43,6 @@ function PreferencesForm({ onSubmit, isLoading = false }) {
     'dairy', 'egg', 'fish', 'shellfish', 'tree nut', 'peanut', 'soy', 'wheat', 'sesame'
   ];
 
-  // Food categories that users can exclude
   const foodCategories = [
     { value: 'Soup', label: 'Soup', icon: '🍲' },
     { value: 'Dessert', label: 'Dessert', icon: '🍰' },
@@ -46,39 +52,29 @@ function PreferencesForm({ onSubmit, isLoading = false }) {
     { value: 'Appetizer', label: 'Appetizer', icon: '🥨' }
   ];
 
-  // Fetch available dates on component mount
   useEffect(() => {
-    fetchAvailableDates();
-  }, []);
-
-  // Set default date when available dates are loaded
-  useEffect(() => {
-    if (availableDates.length > 0 && !preferences.date) {
-      setPreferences(prev => ({
-        ...prev,
-        date: availableDates[0] // Default to first available date
-      }));
-    }
-  }, [availableDates]);
-
-  const fetchAvailableDates = async () => {
-    try {
-      const response = await apiService.menu.getAvailableDates();
-      setAvailableDates(response.dates || []);
-    } catch (error) {
-      console.error('Error fetching available dates:', error);
-    }
-  };
+    const fetchAndSetAvailableDates = async () => {
+      try {
+        const response = await apiService.menu.getAvailableDates();
+        const fetchedDates = response.dates || [];
+        setAvailableDates(fetchedDates);
+      } catch (error) {
+        console.error('Error fetching available dates:', error);
+      }
+    };
+    fetchAndSetAvailableDates();
+  }, []); 
 
   const formatDate = (dateString) => {
-    // Handle YYYY-MM-DD format to avoid timezone issues
+    if (!dateString) return "Invalid Date";
     if (dateString.includes('T')) {
-      // If it's an ISO string, extract date part first
       dateString = dateString.split('T')[0];
     }
+    const parts = dateString.split('-');
+    if (parts.length !== 3) return "Invalid Date Format";
     
-    const [year, month, day] = dateString.split('-');
-    const date = new Date(year, month - 1, day); // month is 0-indexed
+    const [year, month, day] = parts;
+    const date = new Date(year, month - 1, day);
     
     return date.toLocaleDateString('en-US', { 
       weekday: 'long',
@@ -89,42 +85,36 @@ function PreferencesForm({ onSubmit, isLoading = false }) {
   };
 
   const isToday = (dateString) => {
-    // Handle YYYY-MM-DD format to avoid timezone issues
+    if (!dateString) return false;
     if (dateString.includes('T')) {
       dateString = dateString.split('T')[0];
     }
     
     const today = new Date();
-    const todayString = today.getFullYear() + '-' + 
-                       String(today.getMonth() + 1).padStart(2, '0') + '-' + 
-                       String(today.getDate()).padStart(2, '0');
+    const todayFormatted = today.getFullYear() + '-' + 
+                           String(today.getMonth() + 1).padStart(2, '0') + '-' + 
+                           String(today.getDate()).padStart(2, '0');
     
-    return todayString === dateString;
+    return todayFormatted === dateString;
   };
 
   const validateForm = () => {
     const newErrors = {};
-    
     if (!preferences.date) {
       newErrors.date = 'Please select a date for your meal plan';
     }
-    
-    if (preferences.targetCalories < 400 || preferences.targetCalories > 4000) {
-      newErrors.targetCalories = 'Calories must be between 800 and 4000';
+    if (preferences.targetCalories && (preferences.targetCalories < 300 || preferences.targetCalories > 5000)) {
+      newErrors.targetCalories = 'Calories must be between 300 and 5000';
     }
-    
-    if (preferences.minProtein < 0 || preferences.minProtein > 200) {
-      newErrors.minProtein = 'Protein must be between 0 and 200g';
+    if (preferences.minProtein && (preferences.minProtein < 0 || preferences.minProtein > 300)) {
+      newErrors.minProtein = 'Protein must be between 0 and 300g';
     }
-    
-    if (preferences.maxSugar && (preferences.maxSugar < 0 || preferences.maxSugar > 200)) {
+    if (preferences.maxSugar !== '' && (preferences.maxSugar < 0 || preferences.maxSugar > 200)) {
       newErrors.maxSugar = 'Sugar must be between 0 and 200g';
     }
-    
-    if (preferences.maxFat && (preferences.maxFat < 0 || preferences.maxFat > 200)) {
+    if (preferences.maxFat !== '' && (preferences.maxFat < 0 || preferences.maxFat > 200)) {
       newErrors.maxFat = 'Fat must be between 0 and 200g';
     }
-    
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -132,103 +122,63 @@ function PreferencesForm({ onSubmit, isLoading = false }) {
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
     
-    if (type === 'checkbox') {
-      setPreferences({
-        ...preferences,
-        [name]: checked
-      });
-    } else if (type === 'number') {
-      setPreferences({
-        ...preferences,
-        [name]: value === '' ? '' : parseInt(value)
-      });
-    } else {
-      setPreferences({
-        ...preferences,
-        [name]: value
-      });
-    }
+    setPreferences(prev => ({
+      ...prev,
+      [name]: type === 'checkbox' ? checked : (type === 'number' && value !== '' ? parseInt(value) : value)
+    }));
     
-    // Clear error when user starts typing
     if (errors[name]) {
-      setErrors({
-        ...errors,
-        [name]: ''
-      });
+      setErrors(prev => ({ ...prev, [name]: '' }));
     }
   };
 
   const handleTagChange = (e, listType) => {
     const inputValue = e.target.value;
-    
-    // Update the raw input state
-    setTagInputs({
-      ...tagInputs,
-      [listType]: inputValue
-    });
-    
-    // Process the tags and update preferences
+    setTagInputs(prev => ({ ...prev, [listType]: inputValue }));
     const tags = inputValue.split(',').map(tag => tag.trim()).filter(Boolean);
-    setPreferences({
-      ...preferences,
-      [listType]: tags
-    });
+    setPreferences(prev => ({ ...prev, [listType]: tags }));
   };
 
   const handleAllergenChange = (allergen) => {
-    const updatedAllergens = preferences.allergens.includes(allergen)
-      ? preferences.allergens.filter(a => a !== allergen)
-      : [...preferences.allergens, allergen];
-    
-    setPreferences({
-      ...preferences,
-      allergens: updatedAllergens
-    });
+    setPreferences(prev => ({
+      ...prev,
+      allergens: prev.allergens.includes(allergen)
+        ? prev.allergens.filter(a => a !== allergen)
+        : [...prev.allergens, allergen]
+    }));
   };
 
   const handleCategoryChange = (category) => {
-    const updatedCategories = preferences.excludedCategories.includes(category)
-      ? preferences.excludedCategories.filter(c => c !== category)
-      : [...preferences.excludedCategories, category];
-    
-    setPreferences({
-      ...preferences,
-      excludedCategories: updatedCategories
-    });
+    setPreferences(prev => ({
+      ...prev,
+      excludedCategories: prev.excludedCategories.includes(category)
+        ? prev.excludedCategories.filter(c => c !== category)
+        : [...prev.excludedCategories, category]
+    }));
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    
-    if (!validateForm()) {
-      return;
-    }
-    
-    const finalAllowedTags = tagInputs.allowedTags.split(',').map(tag => tag.trim()).filter(Boolean);
-    const finalDisallowedTags = tagInputs.disallowedTags.split(',').map(tag => tag.trim()).filter(Boolean);
-    const finalLikedFoods = tagInputs.likedFoods.split(',').map(tag => tag.trim()).filter(Boolean);
-    const finalDislikedFoods = tagInputs.dislikedFoods.split(',').map(tag => tag.trim()).filter(Boolean);
+    if (!validateForm()) return;
     
     const submitData = {
       ...preferences,
-      allowedTags: finalAllowedTags,
-      disallowedTags: finalDisallowedTags,
-      likedFoods: finalLikedFoods,
-      dislikedFoods: finalDislikedFoods,
+      allowedTags: tagInputs.allowedTags.split(',').map(tag => tag.trim()).filter(Boolean),
+      disallowedTags: tagInputs.disallowedTags.split(',').map(tag => tag.trim()).filter(Boolean),
+      likedFoods: tagInputs.likedFoods.split(',').map(tag => tag.trim()).filter(Boolean),
+      dislikedFoods: tagInputs.dislikedFoods.split(',').map(tag => tag.trim()).filter(Boolean),
       maxSugar: preferences.maxSugar === '' ? undefined : preferences.maxSugar,
       maxFat: preferences.maxFat === '' ? undefined : preferences.maxFat,
     };
-    
     onSubmit(submitData);
   };
 
-    return (
+  return (
     <form className="preferences-form" onSubmit={handleSubmit}>
       <h2>Customize Your Meal Plan</h2>
       
       <div className="form-section">
         <h3>Nutritional Goals</h3>
-        
         <div className="form-group">
           <label htmlFor="targetCalories">Target Calories:</label>
           <input 
@@ -238,12 +188,11 @@ function PreferencesForm({ onSubmit, isLoading = false }) {
             value={preferences.targetCalories} 
             onChange={handleChange}
             min="300" 
-            max="4000" 
+            max="5000" 
             required
           />
           {errors.targetCalories && <span className="error">{errors.targetCalories}</span>}
         </div>
-        
         <div className="form-group">
           <label htmlFor="minProtein">Minimum Protein (g):</label>
           <input 
@@ -253,12 +202,11 @@ function PreferencesForm({ onSubmit, isLoading = false }) {
             value={preferences.minProtein} 
             onChange={handleChange}
             min="0" 
-            max="200" 
+            max="300" 
             required
           />
           {errors.minProtein && <span className="error">{errors.minProtein}</span>}
         </div>
-        
         <div className="form-group">
           <label htmlFor="maxSugar">Maximum Sugar (g) (optional):</label>
           <input 
@@ -273,7 +221,6 @@ function PreferencesForm({ onSubmit, isLoading = false }) {
           />
           {errors.maxSugar && <span className="error">{errors.maxSugar}</span>}
         </div>
-        
         <div className="form-group">
           <label htmlFor="maxFat">Maximum Fat (g) (optional):</label>
           <input 
@@ -292,9 +239,8 @@ function PreferencesForm({ onSubmit, isLoading = false }) {
       
       <div className="form-section">
         <h3>Dietary Preferences</h3>
-        
-        <div className="checkbox-group">
-          <div className="form-group checkbox-group">
+        <div className="checkbox-group-container"> {/* Changed from checkbox-group to avoid nesting issues */}
+          <div className="form-group checkbox-group-item"> {/* Changed class */}
             <input 
               type="checkbox" 
               id="vegetarian" 
@@ -304,8 +250,7 @@ function PreferencesForm({ onSubmit, isLoading = false }) {
             />
             <label htmlFor="vegetarian">Vegetarian</label>
           </div>
-          
-          <div className="form-group checkbox-group">
+          <div className="form-group checkbox-group-item"> {/* Changed class */}
             <input 
               type="checkbox" 
               id="vegan" 
@@ -316,7 +261,6 @@ function PreferencesForm({ onSubmit, isLoading = false }) {
             <label htmlFor="vegan">Vegan</label>
           </div>
         </div>
-        
         <div className="form-group">
           <label>Allergens to Avoid:</label>
           <div className="allergen-grid">
@@ -330,7 +274,7 @@ function PreferencesForm({ onSubmit, isLoading = false }) {
                 />
                 <label htmlFor={`allergen-${allergen}`}>
                   {allergen.charAt(0).toUpperCase() + allergen.slice(1)}
-        </label>
+                </label>
               </div>
             ))}
           </div>
@@ -340,9 +284,8 @@ function PreferencesForm({ onSubmit, isLoading = false }) {
       <div className="form-section">
         <h3>🍽️ Food Preferences</h3>
         <p className="section-description">Tell us what you like and dislike - we'll prioritize your favorites and avoid your dislikes when possible</p>
-  
         <div className="form-group">
-          <label htmlFor="likedFoods">Foods You Enjoy (optional):</label>
+          <label htmlFor="likedFoods">Foods You Enjoy (comma separated, optional):</label>
           <input 
             type="text" 
             id="likedFoods" 
@@ -358,9 +301,8 @@ function PreferencesForm({ onSubmit, isLoading = false }) {
             </div>
           )}
         </div>
-        
         <div className="form-group">
-          <label htmlFor="dislikedFoods">Foods You Avoid (optional):</label>
+          <label htmlFor="dislikedFoods">Foods You Avoid (comma separated, optional):</label>
           <input 
             type="text" 
             id="dislikedFoods" 
@@ -381,7 +323,6 @@ function PreferencesForm({ onSubmit, isLoading = false }) {
       <div className="form-section">
         <h3>🚫 Food Categories to Exclude</h3>
         <p className="section-description">Select food categories you don't want in your meal plan</p>
-        
         <div className="form-group">
           <div className="category-grid">
             {foodCategories.map(category => (
@@ -413,7 +354,6 @@ function PreferencesForm({ onSubmit, isLoading = false }) {
 
       <div className="form-section">
         <h3>📅 Meal Scheduling & Dining Options</h3>
-
         <div className="form-group">
           <label htmlFor="date">Select Date:</label>
           <select 
@@ -421,20 +361,25 @@ function PreferencesForm({ onSubmit, isLoading = false }) {
             name="date" 
             value={preferences.date} 
             onChange={handleChange}
+            required
           >
-            {availableDates.length === 0 ? (
-              <option value="">Loading available dates...</option>
-            ) : (
-              availableDates.map(date => (
-                <option key={date} value={date}>
-                  {formatDate(date)} {isToday(date) && '(Today)'}
-                </option>
-              ))
+            {/* Ensure today's date is an option, even if not in availableDates yet */}
+            {!availableDates.includes(preferences.date) && preferences.date && (
+                 <option key={preferences.date} value={preferences.date}>
+                 {formatDate(preferences.date)} {isToday(preferences.date) && '(Today)'}
+               </option>
+            )}
+            {availableDates.map(date => (
+              <option key={date} value={date}>
+                {formatDate(date)} {isToday(date) && '(Today)'}
+              </option>
+            ))}
+            {availableDates.length === 0 && !preferences.date && (
+              <option value="" disabled>Loading available dates...</option>
             )}
           </select>
           {errors.date && <span className="error">{errors.date}</span>}
         </div>
-  
         <div className="form-group">
           <label htmlFor="diningHall">Preferred Dining Hall:</label>
           <select 
@@ -449,7 +394,6 @@ function PreferencesForm({ onSubmit, isLoading = false }) {
             ))}
           </select>
         </div>
-        
         <div className="form-group">
           <label htmlFor="mealTime">Meal Time:</label>
           <select 
