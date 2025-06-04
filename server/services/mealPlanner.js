@@ -1,4 +1,4 @@
-// Station to category mapping
+// Mapping Stations in Dining Halls to Meal Categories
 const STATION_CATEGORIES = {
   // Bruin Plate (BPlate)
   "Freshly Bowled": "Main Course",
@@ -172,14 +172,14 @@ function detectFoodCategory(itemName, station) {
     return STATION_CATEGORIES[station];
   }
   
-  // Look for station name containing keywords
+  // Look for station name containing specific keywords
   for (const [stationKey, category] of Object.entries(STATION_CATEGORIES)) {
     if (station && station.toLowerCase().includes(stationKey.toLowerCase())) {
       return category;
     }
   }
   
-  // Check item name for category keywords
+  // Check item name for specific category keywords
   const lowerItemName = itemName.toLowerCase();
   for (const [category, keywords] of Object.entries(FOOD_TYPE_KEYWORDS)) {
     if (keywords.some(keyword => lowerItemName.includes(keyword.toLowerCase()))) {
@@ -214,7 +214,7 @@ function detectAllergens(ingredients) {
 }
 
 /**
- * Checks if an item contains any meat products based on a comprehensive keyword list
+ * Checks if an item contains any meat products based on a comprehensive keyword list of possible meat ingredients
  * @param {string} ingredientsText - The combined ingredients text
  * @returns {boolean} True if meat is detected
  */
@@ -238,19 +238,19 @@ function containsAnimalProducts(ingredientsText) {
 }
 
 /**
- * Enhances menu data with additional tags and categories
+ * Self improves menu data with additional tags and categories
  * @param {Array} menuData - The original menu data
  * @returns {Array} Enhanced menu data with additional tags
  */
 function enhanceMenuData(menuData) {
   // Safety check: return empty array if menuData is undefined or null
   if (!menuData || !Array.isArray(menuData)) {
-    console.warn('⚠️ enhanceMenuData: menuData is not a valid array:', menuData);
+    console.warn('enhanceMenuData: menuData is not a valid array:', menuData);
     return [];
   }
   
   return menuData.map(item => {
-    // Convert Mongoose document to plain object
+    // Convert Mongoose document to plain object (was doing this with JSON data earlier from scraper)
     const plainItem = item.toObject ? item.toObject() : item;
     
     // Make sure tags is an array
@@ -282,7 +282,7 @@ function enhanceMenuData(menuData) {
     
     if (hasVeganTag) {
       isVegan = true;
-      isVegetarian = true; // vegan implies vegetarian
+      isVegetarian = true; // vegan automatically implies vegetarian as well 
       if (!tags.includes('vegan')) tags.push('vegan');
       if (!tags.includes('vegetarian')) tags.push('vegetarian');
     } else if (hasVegetarianTag) {
@@ -347,6 +347,8 @@ function enhanceMenuData(menuData) {
     };
   });
 }
+
+// The next part is done in order to get regeneration to be different each time, otherwise the algorithm would be deterministic
 
 /**
  * Determines the variation strategy based on regeneration type and seed
@@ -499,7 +501,7 @@ function applySortingVariation(items, strategy) {
                 if (a.preferenceScore !== b.preferenceScore) {
                     return b.preferenceScore - a.preferenceScore;
                 }
-                return b.score - a.score; // Then by nutritional score
+                return b.score - a.score; // Then by overall nutritional score
             });
             break;
         
@@ -556,7 +558,7 @@ function analyzeDiningHallOptions(menuData, userPreferences) {
             continue;
         }
         
-        // Filter items that meet user's dietary restrictions
+        // Filter items that meet the user's restrictions
         const qualifyingItems = hallItems.filter(item => {
             const passesVegetarianCheck = !vegetarian || item.isVegetarian;
             const passesVeganCheck = !vegan || item.isVegan;
@@ -588,10 +590,10 @@ function analyzeDiningHallOptions(menuData, userPreferences) {
         // Calculate a score for this dining hall based on various factors
         let score = 0;
         
-        // Factor 1: Number of qualifying items (more options = better)
+        // Factor 1: Number of qualifying items; the more matching options, the better
         score += qualifyingItems.length * 10;
         
-        // Factor 2: Nutritional completeness - can we meet calorie and protein targets?
+        // Factor 2: Nutritional completeness, are we able to meet the protein and calorie targets
         const totalPossibleCalories = qualifyingItems.reduce((sum, item) => {
             const calories = item.nutrition?.calories || 0;
             return sum + (calories * 2); // max 2 servings per item
@@ -610,7 +612,7 @@ function analyzeDiningHallOptions(menuData, userPreferences) {
         const categories = new Set(qualifyingItems.map(item => 
             item.category || detectFoodCategory(item.name, item.station)
         ));
-        score += categories.size * 15; // Bonus for variety
+        score += categories.size * 15; // Bonus in score for greater variety
         
         // Factor 4: Food preferences alignment
         if (likedFoods.length > 0) {
@@ -630,7 +632,7 @@ function analyzeDiningHallOptions(menuData, userPreferences) {
                     item.tags.some(tag => tag.toLowerCase().includes(disliked.toLowerCase()))
                 )
             );
-            score -= matchingDislikedItems.length * 30; // Penalty for disliked foods
+            score -= matchingDislikedItems.length * 30; // Penalty in score for disliked foods
         }
         
         hallAnalysis[hall] = {
@@ -692,8 +694,8 @@ export function generateMealPlan(userPreferences, menuData) {
         const diningHallAnalysis = analyzeDiningHallOptions(enhancedMenuData, userPreferences);
         selectedDiningHall = diningHallAnalysis.bestDiningHall;
         
-        console.log(`🏛️ Algorithm chose dining hall: ${selectedDiningHall} based on preferences`);
-        console.log(`📊 Dining hall analysis:`, diningHallAnalysis.summary);
+        console.log(`Algorithm chose dining hall: ${selectedDiningHall} based on preferences`);
+        console.log(`Dining hall analysis:`, diningHallAnalysis.summary);
     }
 
     const MAX_SERVINGS = 2;
@@ -737,7 +739,7 @@ export function generateMealPlan(userPreferences, menuData) {
                                   return inAllergensList || inTags;
                               });
         
-        // Check category exclusions - if user wants to exclude certain categories
+        // Check category exclusions, if a user wants to exclude certain categories like desserts or soups
         const itemCategory = item.category || detectFoodCategory(item.name, item.station);
         const notExcludedCategory = excludedCategories.length === 0 || 
                                   !excludedCategories.includes(itemCategory);
@@ -829,7 +831,7 @@ export function generateMealPlan(userPreferences, menuData) {
     const usedItems = new Set();
     const warnings = [];
 
-    // First pass: Select highest scoring items until we reach nutritional targets
+    // First pass: Select highest scoring items until we reach nutritional targets (to meet core requirements)
     for (const item of sortedItems) {
         let servings = 0;
         const category = item.category || detectFoodCategory(item.name, item.station);
@@ -888,7 +890,7 @@ export function generateMealPlan(userPreferences, menuData) {
         if (totals.calories >= targetCalories * 0.95 && totals.protein >= minProtein) break;
     }
 
-    // Second pass: If we haven't reached calorie goal, add more items
+    // Second pass: If we haven't reached calorie goal, add more items to get closer to the goal while not compromising the core requirements
     if (totals.calories < targetCalories * 0.95) {
         // Filter items we haven't fully used yet
         const remainingItems = sortedItems.filter(item => 
@@ -978,7 +980,7 @@ export function generateMealPlan(userPreferences, menuData) {
         warnings.push(`Fat content exceeds limit (${Math.round(totals.fat)}g vs ${Math.round(maxFat)}g max).`);
     }
 
-    // Round totals for cleaner display
+    // Round totals for cleaner output on client side
     Object.keys(totals).forEach(key => {
         totals[key] = Math.round(totals[key]);
     });
