@@ -2,34 +2,48 @@ import { useState, useEffect } from 'react';
 import { apiService, handleApiError, DINING_HALLS, MEAL_PERIODS } from '../services/api';
 import './MenuPage.css';
 
+const getTodayDateString = () => {
+  const today = new Date();
+  const year = today.getFullYear();
+  const month = String(today.getMonth() + 1).padStart(2, '0'); 
+  const day = String(today.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
 function MenuPage() {
   const [selectedMealTime, setSelectedMealTime] = useState('breakfast');
   const [selectedDiningHall, setSelectedDiningHall] = useState('');
-  const [selectedDate, setSelectedDate] = useState('');
+  const [selectedDate, setSelectedDate] = useState(getTodayDateString()); 
   const [availableDates, setAvailableDates] = useState([]);
   const [menuItems, setMenuItems] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(true); 
   const [error, setError] = useState(null);
   const [selectedItem, setSelectedItem] = useState(null);
   const [showDetails, setShowDetails] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
 
-  const mealTimes = [
-    { id: 'breakfast', name: 'Breakfast', time: '7:00 AM - 11:00 AM' },
-    { id: 'lunch', name: 'Lunch', time: '11:00 AM - 4:00 PM' },
-    { id: 'dinner', name: 'Dinner', time: '4:00 PM - 10:00 PM' }
-  ];
+  const mealTimes = MEAL_PERIODS.map(period => ({
+    id: period,
+    name: period.charAt(0).toUpperCase() + period.slice(1),
+    time: period === 'breakfast' ? '7AM-11AM' : period === 'lunch' ? '11AM-4PM' : '4PM-10PM' 
+  }));
+
 
   useEffect(() => {
-    fetchAvailableDates();
-  }, []);
+    const fetchAndSetAvailableDates = async () => {
+      try {
+        const response = await apiService.menu.getAvailableDates();
+        const fetchedDates = response.dates || [];
+        setAvailableDates(fetchedDates);
 
-  useEffect(() => {
-    if (availableDates.length > 0 && !selectedDate) {
-      // Default to the first available date (usually today)
-      setSelectedDate(availableDates[0]);
-    }
-  }, [availableDates]);
+      } catch (err) {
+        console.error('Error fetching available dates:', err);
+        setError('Failed to load available dates');
+      } 
+      
+    };
+    fetchAndSetAvailableDates();
+  }, []); 
 
   useEffect(() => {
     if (selectedDate) {
@@ -37,18 +51,12 @@ function MenuPage() {
     }
   }, [selectedMealTime, selectedDiningHall, selectedDate]);
 
-  const fetchAvailableDates = async () => {
-    try {
-      const response = await apiService.menu.getAvailableDates();
-      setAvailableDates(response.dates || []);
-    } catch (error) {
-      console.error('Error fetching available dates:', error);
-      setError('Failed to load available dates');
-    }
-  };
-
   const fetchMenuData = async () => {
-    if (!selectedDate) return;
+    if (!selectedDate) {
+      setMenuItems([]);
+      setLoading(false);
+      return;
+    }
     
     setLoading(true);
     setError(null);
@@ -64,21 +72,17 @@ function MenuPage() {
       }
       
       const data = await apiService.menu.getAll(filters);
-      setMenuItems(data);
-    } catch (error) {
-      console.error('Error fetching menu data:', error);
-      setError(handleApiError(error));
+      setMenuItems(data.items || data || []); 
+    } catch (err) {
+      console.error('Error fetching menu data:', err);
+      setError(handleApiError(err));
+      setMenuItems([]); 
     } finally {
       setLoading(false);
     }
   };
 
   const handleSearch = async () => {
-    if (!searchQuery.trim()) {
-      fetchMenuData();
-      return;
-    }
-    
     if (!selectedDate) return;
     
     setLoading(true);
@@ -94,11 +98,12 @@ function MenuPage() {
         filters.dining_hall = selectedDiningHall;
       }
       
-      const data = await apiService.menu.search(searchQuery, filters);
-      setMenuItems(data);
-    } catch (error) {
-      console.error('Error searching menu:', error);
-      setError(handleApiError(error));
+      const data = await apiService.menu.search(searchQuery.trim(), filters);
+      setMenuItems(data.items || data || []);
+    } catch (err) {
+      console.error('Error searching menu:', err);
+      setError(handleApiError(err));
+      setMenuItems([]);
     } finally {
       setLoading(false);
     }
@@ -106,7 +111,7 @@ function MenuPage() {
 
   const groupMenuByCategory = () => {
     const grouped = {};
-    menuItems.forEach(item => {
+    (menuItems || []).forEach(item => { 
       const category = item.station || 'Other';
       if (!grouped[category]) {
         grouped[category] = [];
@@ -128,24 +133,18 @@ function MenuPage() {
 
   const getDietaryTags = (item) => {
     const tags = [];
+    if (!item || !item.tags) return tags;
     
-    if (item.tags) {
-      if (item.tags.some(tag => tag.toLowerCase().includes('vegetarian'))) {
-        tags.push('Vegetarian');
-      }
-      if (item.tags.some(tag => tag.toLowerCase().includes('vegan'))) {
-        tags.push('Vegan');
-      }
-      if (item.tags.some(tag => tag.toLowerCase().includes('gluten'))) {
-        tags.push('Contains Gluten');
-      }
-    }
+    if (item.tags.some(tag => tag.toLowerCase().includes('vegetarian'))) tags.push('Vegetarian');
+    if (item.tags.some(tag => tag.toLowerCase().includes('vegan'))) tags.push('Vegan');
+    if (item.tags.some(tag => tag.toLowerCase().includes('gluten-free'))) tags.push('Gluten-Free');
+    else if (item.tags.some(tag => tag.toLowerCase().includes('gluten'))) tags.push('Contains Gluten');
     
     return tags;
   };
 
   const formatAllergens = (allergens) => {
-    if (!allergens || allergens.length === 0) return 'None';
+    if (!allergens || allergens.length === 0) return 'None listed';
     return allergens.join(', ');
   };
 
@@ -155,14 +154,15 @@ function MenuPage() {
   };
 
   const formatDate = (dateString) => {
-    // Handle YYYY-MM-DD format to avoid timezone issues
+    if (!dateString) return "Invalid Date";
     if (dateString.includes('T')) {
-      // If it's an ISO string, extract date part first
       dateString = dateString.split('T')[0];
     }
-    
-    const [year, month, day] = dateString.split('-');
-    const date = new Date(year, month - 1, day); // month is 0-indexed
+    const parts = dateString.split('-');
+    if (parts.length !== 3) return "Invalid Date Format";
+
+    const [year, month, day] = parts;
+    const date = new Date(year, month - 1, day);
     
     return date.toLocaleDateString('en-US', { 
       weekday: 'long',
@@ -173,20 +173,20 @@ function MenuPage() {
   };
 
   const isToday = (dateString) => {
-    // Handle YYYY-MM-DD format to avoid timezone issues
+    if (!dateString) return false;
     if (dateString.includes('T')) {
       dateString = dateString.split('T')[0];
     }
     
     const today = new Date();
-    const todayString = today.getFullYear() + '-' + 
-                       String(today.getMonth() + 1).padStart(2, '0') + '-' + 
-                       String(today.getDate()).padStart(2, '0');
+    const todayFormatted = today.getFullYear() + '-' + 
+                           String(today.getMonth() + 1).padStart(2, '0') + '-' + 
+                           String(today.getDate()).padStart(2, '0');
     
-    return todayString === dateString;
+    return todayFormatted === dateString;
   };
 
-  if (loading) {
+  if (loading && menuItems.length === 0) { // Show initial loading state more clearly
     return (
       <div className="menu-page">
         <div className="loading-container">
@@ -197,7 +197,7 @@ function MenuPage() {
     );
   }
 
-  if (error) {
+  if (error && menuItems.length === 0) { // Show error state more clearly if no items loaded
     return (
       <div className="menu-page">
         <div className="error-container">
@@ -220,7 +220,7 @@ function MenuPage() {
         <p>
           {selectedDate ? 
             `Explore delicious options for ${formatDate(selectedDate)}${isToday(selectedDate) ? ' (Today)' : ''}` :
-            'Loading available dates...'
+            'Select a date to view menus.'
           }
         </p>
       </div>
@@ -240,7 +240,6 @@ function MenuPage() {
             ))}
           </select>
         </div>
-
         <div className="filter-group">
           <label htmlFor="diningHall">Dining Hall:</label>
           <select
@@ -254,22 +253,30 @@ function MenuPage() {
             ))}
           </select>
         </div>
-
         <div className="filter-group">
           <label htmlFor="date">Date:</label>
           <select
             id="date"
             value={selectedDate}
             onChange={(e) => setSelectedDate(e.target.value)}
+            disabled={availableDates.length === 0}
           >
+            {/* Ensure today's date is an option, even if not in availableDates yet */}
+            {!availableDates.includes(selectedDate) && selectedDate && (
+                 <option key={selectedDate} value={selectedDate}>
+                 {formatDate(selectedDate)} {isToday(selectedDate) && '(Today)'}
+               </option>
+            )}
             {availableDates.map(date => (
               <option key={date} value={date}>
                 {formatDate(date)} {isToday(date) && '(Today)'}
               </option>
             ))}
+            {availableDates.length === 0 && !selectedDate && (
+                <option value="" disabled>Loading dates...</option>
+            )}
           </select>
         </div>
-
         <div className="search-group">
           <input
             type="text"
@@ -278,17 +285,20 @@ function MenuPage() {
             onChange={(e) => setSearchQuery(e.target.value)}
             onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
           />
-          <button onClick={handleSearch} className="search-button">
-            Search
+          <button onClick={handleSearch} className="search-button" disabled={loading}>
+            {loading ? 'Searching...' : 'Search'}
           </button>
         </div>
       </div>
 
+      {loading && <div className="loading-inline"><div className="loading-spinner small"></div> Loading...</div>}
+      {error && !loading && <div className="error-inline">Error: {error} <button onClick={fetchMenuData}>Retry</button></div>}
+
       <div className="menu-content">
-        {menuItems.length === 0 ? (
+        {!loading && !error && menuItems.length === 0 ? (
           <div className="no-items">
-            <p>No menu items found for the selected filters.</p>
-            <p>Try selecting a different dining hall or meal time.</p>
+            <p>No menu items found for the selected filters for {formatDate(selectedDate)}.</p>
+            <p>Try selecting a different dining hall, meal time, or date.</p>
           </div>
         ) : (
           <div className="menu-categories">
@@ -298,36 +308,34 @@ function MenuPage() {
                 <div className="category-items">
                   {items.map(item => (
                     <div 
-                      key={item._id} 
+                      key={item._id || item.name} // Use _id if available, fallback to name
                       className="menu-item-card"
                       onClick={() => handleItemClick(item)}
                     >
                       <div className="item-header">
                         <h4 className="item-name">{item.name}</h4>
-                        <span className="item-location">{item.dining_hall}</span>
+                        {item.dining_hall && <span className="item-location">{item.dining_hall}</span>}
                       </div>
-                      
                       <div className="item-nutrition">
                         <div className="nutrition-item">
                           <span className="nutrition-label">Calories:</span>
                           <span className="nutrition-value">
-                            {item.nutrition?.calories || 0}
+                            {item.nutrition?.calories !== undefined ? Math.round(item.nutrition.calories) : 'N/A'}
                           </span>
                         </div>
                         <div className="nutrition-item">
                           <span className="nutrition-label">Protein:</span>
-                          <span className="nutrition-value">{item.nutrition?.protein || 0}g</span>
+                          <span className="nutrition-value">{item.nutrition?.protein !== undefined ? Math.round(item.nutrition.protein) : 'N/A'}g</span>
                         </div>
                         <div className="nutrition-item">
                           <span className="nutrition-label">Sugar:</span>
-                          <span className="nutrition-value">{item.nutrition?.sugar || 0}g</span>
+                          <span className="nutrition-value">{item.nutrition?.sugar !== undefined ? Math.round(item.nutrition.sugar) : 'N/A'}g</span>
                         </div>
                         <div className="nutrition-item">
                           <span className="nutrition-label">Fat:</span>
-                          <span className="nutrition-value">{item.nutrition?.fat || 0}g</span>
+                          <span className="nutrition-value">{item.nutrition?.fat !== undefined ? Math.round(item.nutrition.fat) : 'N/A'}g</span>
                         </div>
                       </div>
-                      
                       <div className="item-tags">
                         {getDietaryTags(item).map(tag => (
                           <span key={tag} className="dietary-tag">{tag}</span>
@@ -346,58 +354,36 @@ function MenuPage() {
         <div className="item-details-overlay" onClick={closeDetails}>
           <div className="item-details-modal" onClick={(e) => e.stopPropagation()}>
             <button className="close-button" onClick={closeDetails}>×</button>
-            
             <div className="details-header">
               <h2>{selectedItem.name}</h2>
               <p className="details-location">{selectedItem.dining_hall} - {selectedItem.station}</p>
             </div>
-            
             <div className="details-content">
               <div className="nutrition-details">
                 <h3>Nutrition Information</h3>
                 <div className="nutrition-grid">
-                  <div className="nutrition-detail">
-                    <span className="label">Calories:</span>
-                    <span className="value">
-                      {selectedItem.nutrition?.calories || 0}
-                    </span>
-                  </div>
-                  <div className="nutrition-detail">
-                    <span className="label">Protein:</span>
-                    <span className="value">{selectedItem.nutrition?.protein || 0}g</span>
-                  </div>
-                  <div className="nutrition-detail">
-                    <span className="label">Carbs:</span>
-                    <span className="value">{selectedItem.nutrition?.carbs || 0}g</span>
-                  </div>
-                  <div className="nutrition-detail">
-                    <span className="label">Sugar:</span>
-                    <span className="value">{selectedItem.nutrition?.sugar || 0}g</span>
-                  </div>
-                  <div className="nutrition-detail">
-                    <span className="label">Fat:</span>
-                    <span className="value">{selectedItem.nutrition?.fat || 0}g</span>
-                  </div>
+                  <div className="nutrition-detail"><span className="label">Calories:</span> <span className="value">{selectedItem.nutrition?.calories !== undefined ? Math.round(selectedItem.nutrition.calories) : 'N/A'}</span></div>
+                  <div className="nutrition-detail"><span className="label">Protein:</span> <span className="value">{selectedItem.nutrition?.protein !== undefined ? Math.round(selectedItem.nutrition.protein) : 'N/A'}g</span></div>
+                  <div className="nutrition-detail"><span className="label">Carbs:</span> <span className="value">{selectedItem.nutrition?.carbs !== undefined ? Math.round(selectedItem.nutrition.carbs) : 'N/A'}g</span></div>
+                  <div className="nutrition-detail"><span className="label">Sugar:</span> <span className="value">{selectedItem.nutrition?.sugar !== undefined ? Math.round(selectedItem.nutrition.sugar) : 'N/A'}g</span></div>
+                  <div className="nutrition-detail"><span className="label">Fat:</span> <span className="value">{selectedItem.nutrition?.fat !== undefined ? Math.round(selectedItem.nutrition.fat) : 'N/A'}g</span></div>
                 </div>
               </div>
-              
               <div className="ingredients-section">
                 <h3>Ingredients</h3>
                 <p>{formatIngredients(selectedItem.ingredients)}</p>
               </div>
-              
               <div className="allergens-section">
                 <h3>Allergens</h3>
                 <p>{formatAllergens(selectedItem.allergens)}</p>
               </div>
-              
               <div className="tags-section">
                 <h3>Dietary Information</h3>
                 <div className="tags-list">
                   {getDietaryTags(selectedItem).map(tag => (
                     <span key={tag} className="dietary-tag">{tag}</span>
                   ))}
-                  {selectedItem.tags && selectedItem.tags.map(tag => (
+                  {(selectedItem.tags || []).filter(tag => !getDietaryTags(selectedItem).includes(tag)).map(tag => (
                     <span key={tag} className="general-tag">{tag}</span>
                   ))}
                 </div>
@@ -410,4 +396,4 @@ function MenuPage() {
   );
 }
 
-export default MenuPage; 
+export default MenuPage;
