@@ -12,6 +12,7 @@ function PreferencesPage() {
   const [error, setError] = useState(null);
   const [mealPlans, setMealPlans] = useState([]); // Array to store multiple meal plans
   const [currentPreferences, setCurrentPreferences] = useState(null);
+  const [saveSuccess, setSaveSuccess] = useState(null);
   const navigate = useNavigate();
   
   const handleSubmitPreferences = async (preferences, regenerationType = 'default', variationSeed = null) => {
@@ -61,7 +62,7 @@ function PreferencesPage() {
       return;
     }
     
-    // Generate a random variation seed to ensure different meal plans
+
     const variationSeed = Date.now() + Math.floor(Math.random() * 1000);
     
     handleSubmitPreferences(currentPreferences, 'regenerate', variationSeed);
@@ -74,13 +75,26 @@ function PreferencesPage() {
   };
   
   const handleSavePlan = async (plan) => {
+    if (!user) {
+      setSaveSuccess({ type: 'error', message: 'Please log in to save meal plans' });
+      setTimeout(() => setSaveSuccess(null), 3000);
+      return;
+    }
+
     try {
-      // Use user.uid or user.email if needed for saving
-      alert('Meal plan saved! (This feature will be fully implemented with user accounts)');
-      console.log('Saving meal plan for user:', user?.email, plan);
+      const mealPlanData = {
+        mealPlan: plan,
+        preferences: currentPreferences,
+        name: `${currentPreferences?.mealTime || 'Meal'} Plan - ${new Date().toLocaleDateString()}`
+      };
+
+      await apiService.mealPlans.save(mealPlanData);
+      setSaveSuccess({ type: 'success', message: '✅ Meal plan saved successfully!' });
+      setTimeout(() => setSaveSuccess(null), 3000);
     } catch (error) {
       console.error('Error saving meal plan:', error);
-      alert('Error saving meal plan. Please try again.');
+      setSaveSuccess({ type: 'error', message: '❌ Error saving meal plan. Please try again.' });
+      setTimeout(() => setSaveSuccess(null), 3000);
     }
   };
   
@@ -90,6 +104,13 @@ function PreferencesPage() {
           <h2>Set Your Meal Preferences</h2>
           <p>Customize your nutritional goals and dietary preferences</p>
       </div>
+      
+      {/* Toast Notification */}
+      {saveSuccess && (
+        <div className={`toast-notification ${saveSuccess.type}`}>
+          {saveSuccess.message}
+        </div>
+      )}
       
       <div className="preferences-container">
         {loading && (

@@ -1,25 +1,54 @@
 .my-plans-page {
   padding: 2rem;
   min-height: calc(100vh - 120px);
+  background: #f8fafc;
 }
 
 .my-plans-header {
   text-align: center;
   margin-bottom: 2rem;
+  padding: 2rem;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  position: relative;
+  overflow: hidden;
+}
+
+.my-plans-header::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+  animation: shimmer 3s infinite;
+}
+
+@keyframes shimmer {
+  0% { transform: translateX(-100%) translateY(-100%) rotate(45deg); }
+  100% { transform: translateX(100%) translateY(100%) rotate(45deg); }
 }
 
 .my-plans-header h2 {
   font-size: 2.5rem;
   font-weight: 700;
-  color: #1e293b;
+  color: white;
   margin: 0 0 0.5rem 0;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  position: relative;
+  z-index: 1;
 }
 
 .my-plans-header p {
-  /* color: #64748b; */
+  color: white;
   opacity: 0.9;
   font-size: 1.1rem;
+  margin: 0;
+  position: relative;
+  z-index: 1;
 }
 
 .my-plans-actions {
@@ -142,9 +171,11 @@
 }
 
 .meal-plans-grid {
-  display: flex;
-  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-  gap: 1.5rem;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
+  gap: 2rem;
+  max-width: 1400px;
+  margin: 0 auto;
 }
 
 .meal-plan-card {
@@ -154,6 +185,7 @@
   overflow: hidden;
   transition: all 0.2s ease;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  width: 100%;
 }
 
 .meal-plan-card:hover {
@@ -310,24 +342,178 @@
   .my-plans-page {
     padding: 1rem;
   }
-  
+
+  .my-plans-header {
+    padding: 1.5rem;
+    margin: 0 0 1.5rem 0;
+  }
+
   .my-plans-header h2 {
-    font-size: 1.5rem;
+    font-size: 2rem;
+  }
+
+  .my-plans-actions {
+    margin-bottom: 1.5rem;
+  }
+
+  .create-button {
+    padding: 0.75rem 1.5rem;
+    font-size: 0.9rem;
+  }
+
+  .meal-plans-grid {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+
+  .meal-plan-card {
+    margin: 0 0.5rem;
+  }
+
+  .card-header {
+    padding: 1.25rem 1.25rem 1rem 1.25rem;
+  }
+
+  .card-header h3 {
+    font-size: 1rem;
+  }
+
+  .card-meta {
+    gap: 0.5rem;
+  }
+
+  .card-meta span {
+    font-size: 0.75rem;
+    padding: 0.2rem 0.4rem;
+  }
+
+  .card-nutrition {
+    grid-template-columns: repeat(2, 1fr);
+    padding: 1rem 1.25rem;
+    gap: 0.75rem;
+  }
+
+  .nutrition-item .value {
+    font-size: 1rem;
+  }
+
+  .nutrition-item .label {
+    font-size: 0.65rem;
+  }
+
+  .card-items {
+    padding: 1rem 1.25rem;
+  }
+
+  .card-actions {
+    flex-direction: column;
+    gap: 0.75rem;
+    padding: 1rem 1.25rem;
+  }
+
+  .edit-button {
+    padding: 0.75rem 1rem;
+    font-size: 0.9rem;
+  }
+
+  .delete-button {
+    padding: 0.75rem 1rem;
+    font-size: 0.9rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .my-plans-page {
+    padding: 0.5rem;
+  }
+
+  .my-plans-header {
+    padding: 1rem;
+    margin: 0 0 1rem 0;
+  }
+
+  .my-plans-header h2 {
+    font-size: 1.75rem;
+  }
+
+  .my-plans-header p {
+    font-size: 1rem;
+  }
+
+  .my-plans-actions {
+    margin-bottom: 1rem;
+  }
+
+  .create-button {
+    padding: 0.75rem 1.25rem;
+    font-size: 0.85rem;
+    width: 100%;
+    max-width: 280px;
   }
   
   .meal-plans-grid {
-    grid-template-columns: 1fr;
+    gap: 1rem;
   }
-  
+
+  .meal-plan-card {
+    margin: 0;
+    border-radius: 8px;
+  }
+
+  .card-header {
+    padding: 1rem;
+  }
+
   .card-nutrition {
-    grid-template-columns: repeat(2, 1fr);
+    padding: 0.75rem 1rem;
+    gap: 0.5rem;
   }
-  
+
+  .nutrition-item .value {
+    font-size: 0.95rem;
+  }
+
+  .nutrition-item .label {
+    font-size: 0.6rem;
+  }
+
+  .card-items {
+    padding: 0.75rem 1rem;
+  }
+
+  .items-count {
+    font-size: 0.85rem;
+  }
+
+  .item-tag,
+  .more-items {
+    font-size: 0.75rem;
+    padding: 0.2rem 0.4rem;
+  }
+
   .card-actions {
-    flex-direction: column;
+    padding: 0.75rem 1rem;
+    gap: 0.5rem;
   }
-  
-  .edit-button {
-    margin-bottom: 0.5rem;
+
+  .edit-button,
+  .delete-button {
+    padding: 0.625rem 0.75rem;
+    font-size: 0.85rem;
+    border-radius: 6px;
+  }
+
+  .empty-state {
+    padding: 2rem 1rem;
+    margin: 0 0.5rem;
+  }
+
+  .empty-state h3 {
+    font-size: 1.25rem;
+  }
+
+  .auth-required {
+    padding: 2rem 1rem;
+    margin: 0 0.5rem;
   }
 } 
