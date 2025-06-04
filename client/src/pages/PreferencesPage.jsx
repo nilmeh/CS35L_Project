@@ -61,7 +61,10 @@ function PreferencesPage() {
       return;
     }
     
-    handleSubmitPreferences(currentPreferences, 'regenerate');
+    // Generate a random variation seed to ensure different meal plans
+    const variationSeed = Date.now() + Math.floor(Math.random() * 1000);
+    
+    handleSubmitPreferences(currentPreferences, 'regenerate', variationSeed);
   };
   
   const handleClearResults = () => {
