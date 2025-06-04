@@ -707,6 +707,7 @@ export function generateMealPlan(userPreferences, menuData) {
         "Beverage": 1
     };
 
+
     // STEP 2: Filter menu items based on user preferences AND selected dining hall
     const filteredMenu = enhancedMenuData.filter(item => {
         // Check dietary restrictions - if user wants vegetarian/vegan, check if item qualifies
@@ -963,6 +964,86 @@ export function generateMealPlan(userPreferences, menuData) {
 
             // If we've reached our calorie target, stop
             if (totals.calories >= targetCalories * 0.95) break;
+        }
+    }
+
+    // Third pass: If still below calorie goal, add extra servings in priority order
+    if (totals.calories < targetCalories * 0.95) {
+        const PRIORITY_ORDER = ["Main Course", "Side", "Soup", "Dessert", "Beverage"];
+        const caloriesNeeded = targetCalories - totals.calories;
+        
+        console.log(`Still need ${caloriesNeeded} calories. Adding extra servings in priority order.`);
+        
+        // Continue adding servings until we reach the calorie goal or run out of options
+        let attempts = 0;
+        const maxAttempts = 20; // Prevent infinite loops
+        
+        while (totals.calories < targetCalories * 0.95 && attempts < maxAttempts) {
+            let addedAnyServing = false;
+            
+            // Go through each category in priority order
+            for (const priorityCategory of PRIORITY_ORDER) {
+                if (totals.calories >= targetCalories * 0.95) break;
+                
+                // Find items in this category that we can add more servings to
+                const categoryItems = selectedItems.filter(item => item.category === priorityCategory);
+                
+                for (const selectedItem of categoryItems) {
+                    if (totals.calories >= targetCalories * 0.95) break;
+                    
+                    // Find the original menu item to get nutrition info
+                    const originalItem = sortedItems.find(item => item.name === selectedItem.name);
+                    if (!originalItem) continue;
+                    
+                    const calories = originalItem.calculatedCalories;
+                    const protein = originalItem.nutrition?.protein || 0;
+                    const sugar = originalItem.nutrition?.sugar || 0;
+                    const fat = originalItem.nutrition?.fat || 0;
+                    
+                    // Check if we can add another serving without violating constraints
+                    const wouldExceedSugar = maxSugar && (totals.sugar + sugar > maxSugar * 1.2);
+                    const wouldExceedFat = maxFat && (totals.fat + fat > maxFat * 1.2);
+                    const wouldExceedCalories = totals.calories + calories > targetCalories * 1.3;
+                    
+                    if (!wouldExceedSugar && !wouldExceedFat && !wouldExceedCalories) {
+                        // Add one more serving
+                        selectedItem.servings += 1;
+                        selectedItem.calories += calories;
+                        selectedItem.protein += protein;
+                        selectedItem.sugar += sugar;
+                        selectedItem.fat += fat;
+                        
+                        // Update totals
+                        totals.calories += calories;
+                        totals.protein += protein;
+                        totals.sugar += sugar;
+                        totals.fat += fat;
+                        
+                        // Update counts
+                        itemCount[selectedItem.name] = selectedItem.servings;
+                        categoryCount[priorityCategory] = (categoryCount[priorityCategory] || 0) + 1;
+                        
+                        addedAnyServing = true;
+                        
+                        console.log(`Added 1 serving of ${selectedItem.name} (${priorityCategory}). New total: ${totals.calories} calories`);
+                        
+                        // Check if we've reached the goal
+                        if (totals.calories >= targetCalories * 0.95) break;
+                    }
+                }
+            }
+            
+            // If we couldn't add any servings in this round, break to avoid infinite loop
+            if (!addedAnyServing) {
+                console.log("Couldn't add any more servings without violating constraints");
+                break;
+            }
+            
+            attempts++;
+        }
+        
+        if (attempts >= maxAttempts) {
+            console.log("Reached maximum attempts for adding extra servings");
         }
     }
 
