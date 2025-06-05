@@ -2,7 +2,7 @@ name: Weekly Scraper
 
 on:
   schedule:
-    - cron: '0 7 * * 0'  # Every Sunday midnight LA time (7 AM UTC)
+    - cron: '0 7 * * 0'  # Every Sunday at midnight LA time (7 AM UTC)
   workflow_dispatch:
 
 jobs:
@@ -12,6 +12,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
+        with:
+          persist-credentials: true  # needed for pushing back
 
       - name: Set up Node.js
         uses: actions/setup-node@v3
@@ -22,10 +24,25 @@ jobs:
         working-directory: ./scraper
         run: npm install
 
-      - name: Run scraper scripts
+      - name: Run scraper and organize JSON
         run: |
           node scraper/uclaScraper.js
           node scraper/extractResults.js
+
+      - name: Commit and push updated JSON files
+        run: |
+          # Configure Git author
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          # Stage any changed .json files (including organized_results.json)
+          git add **/*.json
+
+          # Only commit if there are staged changes
+          if ! git diff --cached --quiet; then
+            git commit -m "Update JSON files from scraper"
+            git push origin HEAD:main
+          fi
 
       - name: Install server dependencies
         working-directory: ./server
@@ -35,4 +52,4 @@ jobs:
         working-directory: ./server
         env:
           MONGO_URI: ${{ secrets.MONGO_URI }}
-        run: node uploadToDB.js
+        run: node uploadDb.js
