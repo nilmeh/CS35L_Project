@@ -12,6 +12,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Set up Node.js
         uses: actions/setup-node@v3
@@ -26,6 +28,14 @@ jobs:
         run: |
           node scraper/uclaScraper.js
           node scraper/extractResults.js
+
+      - name: Commit and push updated data
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add server/data/organized_results.json
+          git commit -m "Update dining hall data - $(date)" || exit 0
+          git push
 
       - name: Install server dependencies
         working-directory: ./server
