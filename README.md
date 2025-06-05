@@ -45,13 +45,12 @@ Follow these steps to run the project locally on your machine:
 - **Node.js** (v18 or higher recommended)
 - **npm** (comes with Node.js)
 - **MongoDB** (local or Atlas cluster)
-- **Python 3** (for the scraper)
 - **Chrome browser** (for Selenium web scraping)
 - **ChromeDriver** (matching your Chrome version, and in your PATH)
 
-### 2. Clone the Repository
+### 2. Clone the Repository (with SSH here, can be done in other ways)
 ```
-git clone <your-repo-url>
+git clone git@github.com:nilmeh/CS35L_Project.git
 cd CS35L_Project
 ```
 
@@ -73,11 +72,12 @@ npm install
 ```
 
 ### 4. Set Up Environment Variables
-- For the backend, create a `.env` file in the root directory with the following (edit as needed):
+- For the backend, create a `.env` file in the `server` directory with the following (edit as needed):
 ```
 MONGODB_URI=<your-mongodb-uri>
 ```
-- For the frontend, you may need to set up Firebase config in `client/src/services/firebase.js`. This can be done with an env or directly, although our project uses an env in client with the following:
+- You will also need a file named `firebaseServiceKey.json` in your `server` directory. This information, along with that in the step below, can be found through the Firebase console if setting up a new project.
+- For the frontend, you need to set up Firebase config in `client/src/services/firebase.js`. This can be done with a `.env` or directly, although our project uses a `.env` in the `client` directory with the following:
 ```
 VITE_FIREBASE_API_KEY=your_key
 VITE_FIREBASE_AUTH_DOMAIN=your_domain
@@ -86,7 +86,6 @@ VITE_FIREBASE_STORAGE_BUCKET=your_storage
 VITE_FIREBASE_MESSAGING_SENDER_ID=your_id
 VITE_FIREBASE_APP_ID=your_id
 ```
-This information can be found through the Firebase console.
 
 ### 5. Run the Scraper (Optional, to update menu data, takes a while)
 ```
@@ -106,10 +105,8 @@ npm start
 cd client
 npm run dev
 ```
-
+- Open the localhost at the provided port on any browser to access the website.
 ---
 
 **Note:**
-- Make sure MongoDB is running locally or your Atlas URI is correct.
-- For Google OAuth, set up Firebase credentials as described in the codebase.
-- If you want to automate menu scraping, set up a cron job to run the scraper script regularly (this can be done with with GitHub actions using our YAML workflow).
+- If you want to automate menu scraping, set up a cron job to run the scraper script regularly (this can be done with with GitHub actions using the YAML workflow provided under `.github/workflows`).
