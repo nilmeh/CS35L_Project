@@ -102,11 +102,12 @@ npm start
 
 ### 7. Start the Frontend
 ```
-cd client
+cd ../client
 npm run dev
 ```
 - Open the localhost at the provided port on any browser to access the website.
 ---
 
-**Note:**
+**Notes:**
 - If you want to automate menu scraping, set up a cron job to run the scraper script regularly (this can be done with with GitHub actions using the YAML workflow provided under `.github/workflows`).
+- Build server and frontend in different shells, and make sure you're in the right directory.
