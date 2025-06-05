@@ -166,12 +166,16 @@ function EditPlanPage() {
     try {
       setLoading(true);
       const plan = await apiService.mealPlans.getById(planId);
+      
+      // Saved meal plan items now have correct total values, no conversion needed
+      const convertedItems = plan.items || [];
+      
       setMealPlan({
         name: plan.name,
         date: plan.date.split('T')[0],
         mealTime: plan.mealTime,
         diningHall: plan.diningHall || '',
-        items: plan.items || []
+        items: convertedItems
       });
       setSelectedDiningHall(plan.diningHall || 'De Neve Dining');
       setSelectedPlanId(planId);
@@ -188,13 +192,11 @@ function EditPlanPage() {
   // Calculate nutritional totals
   const nutritionTotals = useMemo(() => {
     return mealPlan.items.reduce((acc, item) => {
-      const servings = item.servings || 1;
-      
-      // Access nutrition values directly from item properties
-      acc.calories += (item.calories || 0) * servings;
-      acc.protein += (item.protein || 0) * servings;
-      acc.sugar += (item.sugar || 0) * servings;
-      acc.fat += (item.fat || 0) * servings;
+      // Item values are now total values (already include servings), don't multiply again
+      acc.calories += item.calories || 0;
+      acc.protein += item.protein || 0;
+      acc.sugar += item.sugar || 0;
+      acc.fat += item.fat || 0;
       return acc;
     }, { calories: 0, protein: 0, sugar: 0, fat: 0 });
   }, [mealPlan.items]);
@@ -245,18 +247,41 @@ function EditPlanPage() {
 
     if (existingItemIndex >= 0) {
       const updatedItems = [...mealPlan.items];
-      updatedItems[existingItemIndex].servings = (updatedItems[existingItemIndex].servings || 1) + 1;
+      const existingItem = updatedItems[existingItemIndex];
+      const currentServings = existingItem.servings || 1;
+      const newServings = currentServings + 1;
+      
+      // Calculate per-serving values from existing totals, then add one more serving
+      const perServingCalories = existingItem.calories / currentServings;
+      const perServingProtein = existingItem.protein / currentServings;
+      const perServingSugar = existingItem.sugar / currentServings;
+      const perServingFat = existingItem.fat / currentServings;
+      
+      updatedItems[existingItemIndex] = {
+        ...existingItem,
+        servings: newServings,
+        calories: perServingCalories * newServings,
+        protein: perServingProtein * newServings,
+        sugar: perServingSugar * newServings,
+        fat: perServingFat * newServings,
+      };
+      
       setMealPlan(prev => ({ ...prev, items: updatedItems }));
     } else {
-      // Transform the item to match the meal plan schema
+      // Transform the item to match the meal plan schema (store as total values)
+      const perServingCalories = item.calories || item.nutrition?.calories || 0;
+      const perServingProtein = item.protein || item.nutrition?.protein || 0;
+      const perServingSugar = item.sugar || item.nutrition?.sugar || 0;
+      const perServingFat = item.fat || item.nutrition?.fat || 0;
+      
       const newItem = {
         ...item,
         servings: 1,
-        // Flatten nutrition data if it exists under nutrition property
-        calories: item.calories || item.nutrition?.calories || 0,
-        protein: item.protein || item.nutrition?.protein || 0,
-        sugar: item.sugar || item.nutrition?.sugar || 0,
-        fat: item.fat || item.nutrition?.fat || 0,
+        // Store as total values (1 serving initially)
+        calories: perServingCalories,
+        protein: perServingProtein,
+        sugar: perServingSugar,
+        fat: perServingFat,
         carbs: item.carbs || item.nutrition?.carbs || 0,
         fiber: item.fiber || item.nutrition?.fiber || 0,
         sodium: item.sodium || item.nutrition?.sodium || 0,
@@ -281,7 +306,25 @@ function EditPlanPage() {
   const updateItemServings = (index, newServings) => {
     if (newServings < 1) return;
     const updatedItems = [...mealPlan.items];
-    updatedItems[index].servings = newServings;
+    const item = updatedItems[index];
+    const currentServings = item.servings || 1;
+    
+   
+    const perServingCalories = item.calories / currentServings;
+    const perServingProtein = item.protein / currentServings;
+    const perServingSugar = item.sugar / currentServings;
+    const perServingFat = item.fat / currentServings;
+    
+    
+    updatedItems[index] = {
+      ...item,
+      servings: newServings,
+      calories: perServingCalories * newServings,
+      protein: perServingProtein * newServings,
+      sugar: perServingSugar * newServings,
+      fat: perServingFat * newServings,
+    };
+    
     setMealPlan(prev => ({ ...prev, items: updatedItems }));
   };
 
@@ -595,8 +638,8 @@ function EditPlanPage() {
                       <h4>{item.name}</h4>
                       <p>{item.dining_hall} • {item.station}</p>
                       <div className="item-stats">
-                        {Math.round((item.calories || 0) * item.servings)} cal • 
-                        {Math.round((item.protein || 0) * item.servings)}g protein
+                        {Math.round(item.calories || 0)} cal • 
+                        {Math.round(item.protein || 0)}g protein
                       </div>
                     </div>
                     

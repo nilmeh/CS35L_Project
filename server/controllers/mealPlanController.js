@@ -246,14 +246,14 @@ export const saveMealPlan = async (req, res) => {
     });
 
     const nutritionTotals = items.reduce((acc, item) => {
-      const servings = item.servings || 1;
-      acc.calories += (item.calories || 0) * servings;
-      acc.protein += (item.protein || 0) * servings;
-      acc.sugar += (item.sugar || 0) * servings;
-      acc.fat += (item.fat || 0) * servings;
-      acc.carbs += (item.carbs || 0) * servings;
-      acc.fiber += (item.fiber || 0) * servings;
-      acc.sodium += (item.sodium || 0) * servings;
+      // Items from API already have total values (calories * servings), don't multiply again
+      acc.calories += item.calories || 0;
+      acc.protein += item.protein || 0;
+      acc.sugar += item.sugar || 0;
+      acc.fat += item.fat || 0;
+      acc.carbs += item.carbs || 0;
+      acc.fiber += item.fiber || 0;
+      acc.sodium += item.sodium || 0;
       return acc;
     }, {
       calories: 0,
@@ -302,7 +302,7 @@ export const saveMealPlan = async (req, res) => {
   }
 };
 
-// Generate a meal plan (existing functionality)
+
 export const generateMealPlanForUser = async (req, res) => {
   try {
     const preferences = req.body;

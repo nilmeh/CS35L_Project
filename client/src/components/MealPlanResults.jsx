@@ -73,6 +73,11 @@ function MealPlanResults({ mealPlan, onSave, compact = false, preferences = null
       return;
     }
 
+    // Prevent duplicate saves
+    if (saving || saved) {
+      return;
+    }
+
     setSaving(true);
     setSaveError(null);
 
@@ -374,13 +379,7 @@ function MealPlanResults({ mealPlan, onSave, compact = false, preferences = null
             </button>
           )}
 
-          {/* Legacy onSave support */}
-          {onSave && !user && (
-            <button className="action-button save" onClick={() => onSave(mealPlan)}>
-              <span className="button-icon">💾</span>
-              <span>Save This Plan</span>
-            </button>
-          )}
+
         </div>
       </div>
     </div>

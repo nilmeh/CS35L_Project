@@ -74,29 +74,7 @@ function PreferencesPage() {
     setCurrentPreferences(null);
   };
   
-  const handleSavePlan = async (plan) => {
-    if (!user) {
-      setSaveSuccess({ type: 'error', message: 'Please log in to save meal plans' });
-      setTimeout(() => setSaveSuccess(null), 3000);
-      return;
-    }
 
-    try {
-      const mealPlanData = {
-        mealPlan: plan,
-        preferences: currentPreferences,
-        name: `${currentPreferences?.mealTime || 'Meal'} Plan - ${new Date().toLocaleDateString()}`
-      };
-
-      await apiService.mealPlans.save(mealPlanData);
-      setSaveSuccess({ type: 'success', message: '✅ Meal plan saved successfully!' });
-      setTimeout(() => setSaveSuccess(null), 3000);
-    } catch (error) {
-      console.error('Error saving meal plan:', error);
-      setSaveSuccess({ type: 'error', message: '❌ Error saving meal plan. Please try again.' });
-      setTimeout(() => setSaveSuccess(null), 3000);
-    }
-  };
   
   return (
     <div className="preferences-page">
@@ -161,7 +139,6 @@ function PreferencesPage() {
                   </div>
                   <MealPlanResults 
                     mealPlan={planData.mealPlan} 
-                    onSave={(plan) => handleSavePlan({...plan, optionId: planData.id})}
                     compact={mealPlans.length > 1}
                     preferences={currentPreferences}
                   />

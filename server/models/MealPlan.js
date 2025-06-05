@@ -79,16 +79,15 @@ const mealPlanSchema = new Schema({
 mealPlanSchema.pre('save', function(next) {
   this.updatedAt = Date.now();
   
-  // Calculate nutrition totals from items
+  // Calculate nutrition totals from items 
   const totals = this.items.reduce((acc, item) => {
-    const servings = item.servings || 1;
-    acc.calories += (item.calories || 0) * servings;
-    acc.protein += (item.protein || 0) * servings;
-    acc.sugar += (item.sugar || 0) * servings;
-    acc.fat += (item.fat || 0) * servings;
-    acc.carbs += (item.carbs || 0) * servings;
-    acc.fiber += (item.fiber || 0) * servings;
-    acc.sodium += (item.sodium || 0) * servings;
+    acc.calories += item.calories || 0;
+    acc.protein += item.protein || 0;
+    acc.sugar += item.sugar || 0;
+    acc.fat += item.fat || 0;
+    acc.carbs += item.carbs || 0;
+    acc.fiber += item.fiber || 0;
+    acc.sodium += item.sodium || 0;
     return acc;
   }, {
     calories: 0,
