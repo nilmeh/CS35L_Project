@@ -23,8 +23,8 @@ function Navbar() {
     }
   };
 
-  // Hide navbar links on login/signup pages
-  const hideLinks = location.pathname === '/login' || location.pathname === '/signup';
+  // Show only Menu on login/signup or if not logged in, otherwise show all
+  const isAuthPage = location.pathname === '/login' || location.pathname === '/signup';
 
   return (
     <nav className="navbar">
@@ -33,33 +33,52 @@ function Navbar() {
           <h1 style={{ margin: 0, fontSize: '2rem', fontWeight: 700, letterSpacing: 0.5, background: 'none', color: 'white' }}>UCLA Meal Planner</h1>
         </Link>
       </div>
-      {!hideLinks && (
-        <div className="navbar-links">
-          <Link 
-            to="/" 
-            className={location.pathname === '/' ? 'active' : ''}
-          >
-            Dashboard
-          </Link>
-          <Link 
-            to="/menu" 
-            className={location.pathname === '/menu' ? 'active' : ''}
-          >
-            Menu
-          </Link>
-          <Link 
-            to="/my-plans" 
-            className={location.pathname === '/my-plans' ? 'active' : ''}
-          >
-            My Plans
-          </Link>
-          {user && (
-            <button className="navbar-logout-btn" onClick={handleLogout} disabled={loggingOut}>
-              {loggingOut ? 'Logging out...' : 'Log Out'}
-            </button>
-          )}
-        </div>
-      )}
+      <div className="navbar-links">
+        {isAuthPage || !user ? (
+          <>
+            {/* Hide Menu link on /menu if not logged in */}
+            {!(location.pathname === '/menu' && !user) && (
+              <Link 
+                to="/menu" 
+                className={location.pathname === '/menu' ? 'active' : ''}
+              >
+                Menu
+              </Link>
+            )}
+            {!isAuthPage && (
+              <button className="navbar-logout-btn" onClick={() => navigate('/login')}>
+                Login / Sign Up
+              </button>
+            )}
+          </>
+        ) : (
+          <>
+            <Link 
+              to="/" 
+              className={location.pathname === '/' ? 'active' : ''}
+            >
+              Dashboard
+            </Link>
+            <Link 
+              to="/menu" 
+              className={location.pathname === '/menu' ? 'active' : ''}
+            >
+              Menu
+            </Link>
+            <Link 
+              to="/my-plans" 
+              className={location.pathname === '/my-plans' ? 'active' : ''}
+            >
+              My Plans
+            </Link>
+            {user && (
+              <button className="navbar-logout-btn" onClick={handleLogout} disabled={loggingOut}>
+                {loggingOut ? 'Logging out...' : 'Log Out'}
+              </button>
+            )}
+          </>
+        )}
+      </div>
     </nav>
   );
 }

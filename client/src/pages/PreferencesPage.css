@@ -74,6 +74,11 @@
 
 /* Loading State */
 .preferences-loading {
+  position: absolute;
+  top: calc(50% + 60px); /* Offset by approx header height */
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 10;
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -838,4 +843,4 @@
     opacity: 0;
     transform: translateX(100%);
   }
-} 
+}

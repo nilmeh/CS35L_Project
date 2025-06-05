@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { createUserWithEmailAndPassword, GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
 import { auth } from '../services/firebase';
@@ -10,14 +10,17 @@ function SignupPage() {
     lastName: '',
     email: '',
     password: '',
-    confirmPassword: '',
-    agreedToTerms: false
+    confirmPassword: ''
   });
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({});
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [loading, errors]);
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -68,10 +71,6 @@ function SignupPage() {
       newErrors.confirmPassword = 'Please confirm your password';
     } else if (formData.password !== formData.confirmPassword) {
       newErrors.confirmPassword = 'Passwords do not match';
-    }
-
-    if (!formData.agreedToTerms) {
-      newErrors.agreedToTerms = 'You must agree to the terms and conditions';
     }
 
     setErrors(newErrors);
@@ -211,20 +210,6 @@ function SignupPage() {
                 </button>
               </div>
               {errors.confirmPassword && <div className="error-message">{errors.confirmPassword}</div>}
-            </div>
-            <div className="form-group terms-agreement">
-              <input
-                type="checkbox"
-                id="agreedToTerms"
-                name="agreedToTerms"
-                checked={formData.agreedToTerms}
-                onChange={handleChange}
-                disabled={loading}
-              />
-              <label htmlFor="agreedToTerms">
-                I agree to the <a href="/terms" className="terms-link" target="_blank" rel="noopener noreferrer">terms and conditions</a>
-              </label>
-              {errors.agreedToTerms && <div className="error-message">{errors.agreedToTerms}</div>}
             </div>
             <button type="submit" className="btn btn-primary" disabled={loading}>
               {loading ? 'Signing up...' : 'Sign Up'}

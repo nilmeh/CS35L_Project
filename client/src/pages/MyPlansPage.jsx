@@ -33,6 +33,10 @@ function MyPlansPage() {
     fetchMealPlans();
   }, [user]);
 
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [loading, error, mealPlans]);
+
   const formatDate = (dateString) => {
     return new Date(dateString).toLocaleDateString('en-US', { 
       weekday: 'short',
@@ -173,4 +177,4 @@ function MyPlansPage() {
   );
 }
 
-export default MyPlansPage; 
+export default MyPlansPage;

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../components/AuthProvider';
 import PreferencesForm from '../components/PreferencesForm';
@@ -14,6 +14,10 @@ function PreferencesPage() {
   const [currentPreferences, setCurrentPreferences] = useState(null);
   const [saveSuccess, setSaveSuccess] = useState(null);
   const navigate = useNavigate();
+  
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [mealPlans, loading, error]);
   
   const handleSubmitPreferences = async (preferences, regenerationType = 'default', variationSeed = null) => {
     setLoading(true);

@@ -51,6 +51,10 @@ function MenuPage() {
     }
   }, [selectedMealTime, selectedDiningHall, selectedDate]);
 
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [loading, error, menuItems]);
+
   const fetchMenuData = async () => {
     if (!selectedDate) {
       setMenuItems([]);

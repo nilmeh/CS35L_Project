@@ -377,6 +377,10 @@ function EditPlanPage() {
     }
   };
 
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [loading, error, mealPlan.items]);
+
   if (loading) {
     return (
       <div className="edit-plan-page">
@@ -676,4 +680,4 @@ function EditPlanPage() {
   );
 }
 
-export default EditPlanPage; 
+export default EditPlanPage;

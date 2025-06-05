@@ -44,6 +44,10 @@ function Dashboard() {
     fetchDashboardData();
   }, [user]);
 
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [loading, user, mealPlans]);
+
   const calculateAnalytics = (plans) => {
     if (!plans || plans.length === 0) {
       return {
@@ -210,7 +214,11 @@ function Dashboard() {
               <h3>🍽️ Latest Meal Plan</h3>
               <Link to="/my-plans" className="button-link secondary">View All</Link>
             </div>
-            <div className="meal-plan-card">
+            <div 
+              className="meal-plan-card clickable"
+              onClick={() => window.location.href = `/edit-plan/${mealPlans[0]._id}`}
+              style={{ cursor: 'pointer' }}
+            >
               <div className="meal-plan-header">
                 <h4>{mealPlans[0].name}</h4>
                 <p className="meal-plan-meta">
@@ -366,4 +374,4 @@ function Dashboard() {
   );
 }
 
-export default Dashboard; 
+export default Dashboard;
