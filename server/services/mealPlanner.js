@@ -867,23 +867,33 @@ export function generateMealPlan(userPreferences, menuData) {
 
         if (servings > 0) {
             // Track item and category counts
-            itemCount[item.name] = servings;
+            const previousServings = itemCount[item.name] || 0;
+            itemCount[item.name] = previousServings + servings;
             categoryCount[category] = (categoryCount[category] || 0) + servings;
             usedItems.add(item.name);
             
-            // Add to selected items with details
-            selectedItems.push({
-                name: item.name,
-                servings: servings,
-                calories: calories * servings,
-                protein: protein * servings,
-                sugar: sugar * servings,
-                fat: fat * servings,
-                category: category,
-                dining_hall: item.dining_hall,
-                station: item.station,
-                preferenceScore: item.preferenceScore
-            });
+            // Find existing item or add new one
+            const existingItemIndex = selectedItems.findIndex(si => si.name === item.name);
+            if (existingItemIndex >= 0) {
+                selectedItems[existingItemIndex].servings += servings;
+                selectedItems[existingItemIndex].calories += calories * servings;
+                selectedItems[existingItemIndex].protein += protein * servings;
+                selectedItems[existingItemIndex].sugar += sugar * servings;
+                selectedItems[existingItemIndex].fat += fat * servings;
+            } else {
+                selectedItems.push({
+                    name: item.name,
+                    servings: servings,
+                    calories: calories * servings,
+                    protein: protein * servings,
+                    sugar: sugar * servings,
+                    fat: fat * servings,
+                    category: category,
+                    dining_hall: item.dining_hall,
+                    station: item.station,
+                    preferenceScore: item.preferenceScore
+                });
+            }
         }
 
         // If we've reached our targets, stop adding items
