@@ -2,7 +2,7 @@ name: Weekly Scraper
 
 on:
   schedule:
-    - cron: '0 7 * * 0'  # Every Sunday midnight LA time (7 AM UTC)
+    - cron: '0 7 * * 0'  # Every Sunday at midnight LA time (7 AM UTC)
   workflow_dispatch:
 
 jobs:
@@ -13,7 +13,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
+          persist-credentials: true  # needed for pushing back
 
       - name: Set up Node.js
         uses: actions/setup-node@v3
@@ -24,18 +24,25 @@ jobs:
         working-directory: ./scraper
         run: npm install
 
-      - name: Run scraper scripts
+      - name: Run scraper and organize JSON
         run: |
           node scraper/uclaScraper.js
           node scraper/extractResults.js
 
-      - name: Commit and push updated data
+      - name: Commit and push updated JSON files
         run: |
-          git config --local user.email "action@github.com"
-          git config --local user.name "GitHub Action"
-          git add server/data/organized_results.json
-          git commit -m "Update dining hall data - $(date)" || exit 0
-          git push
+          # Configure Git author
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          # Stage any changed .json files (including organized_results.json)
+          git add **/*.json
+
+          # Only commit if there are staged changes
+          if ! git diff --cached --quiet; then
+            git commit -m "Update JSON files from scraper"
+            git push origin HEAD:main
+          fi
 
       - name: Install server dependencies
         working-directory: ./server
@@ -45,4 +52,4 @@ jobs:
         working-directory: ./server
         env:
           MONGO_URI: ${{ secrets.MONGO_URI }}
-        run: node uploadToDB.js
+        run: node uploadDb.js
