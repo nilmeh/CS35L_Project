@@ -74,11 +74,8 @@ async function upload() {
       console.log(JSON.stringify(docs[0], null, 2));
     }
 
-    // Clear and insert
-    await MenuItem.deleteMany({});
     await MenuItem.insertMany(docs);
     console.log('Upload complete: all items inserted.');
-
     await mongoose.disconnect();
   } catch (error) {
     console.error('Upload failed:', error);

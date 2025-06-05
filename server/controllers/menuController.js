@@ -52,8 +52,6 @@ export const uploadMenuItems = async (req, res) => {
       return res.status(400).json({ message: "Request body must be an array of menu items" });
     }
 
-    // Clear existing items and insert new ones
-    await MenuItem.deleteMany();
     await MenuItem.insertMany(items);
     
     res.status(201).json({ 
