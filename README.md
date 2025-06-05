@@ -39,7 +39,7 @@ This project was developed as part of the CS35L Software Construction course at 
 
 ## Local Deployment Instructions
 
-Follow these steps to run the project locally on your machine:
+Follow these steps to run the project locally on your machine (TAs can skip step 2 and 4):
 
 ### 1. Prerequisites
 - **Node.js** (v18 or higher recommended)
