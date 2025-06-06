@@ -38,7 +38,20 @@ function MyPlansPage() {
   }, [loading, error, mealPlans]);
 
   const formatDate = (dateString) => {
-    return new Date(dateString).toLocaleDateString('en-US', { 
+    
+    if (!dateString) return "Invalid Date";
+    
+    
+    const dateOnly = dateString.includes('T') ? dateString.split('T')[0] : dateString;
+    
+    
+    const parts = dateOnly.split('-');
+    if (parts.length !== 3) return "Invalid Date";
+    
+    const [year, month, day] = parts;
+    const date = new Date(year, month - 1, day); // month is 0-indexed
+    
+    return date.toLocaleDateString('en-US', { 
       weekday: 'short',
       month: 'short', 
       day: 'numeric' 
